@@ -316,7 +316,7 @@ class Bader:
         """Set the location of the Bader maxima.
         """
         maxima = np.add(maxima, self.voxel_offset_fractional)
-        maxima /= self.density.shape
+        maxima = np.divide(maxima, self.density.shape)
         self._bader_maxima = np.ascontiguousarray(maxima)
 
     @property
