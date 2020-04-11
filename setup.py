@@ -58,7 +58,7 @@ setup(
     long_description=__long_desc__,
     url=__url__,
     license="MIT",
-    keywords="grid based bader charge analysis",
+    keywords=["grid-based", "Bader", "charge", "analysis"],
     packages=['pybader', os.path.join('pybader', 'io')],
     install_requires=requirements,
     python_requires='>=3.6',
