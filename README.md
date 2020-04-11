@@ -108,6 +108,6 @@ MIT
    [Numpy]: <https://numpy.org/>
    [Numba]: <https://numba.pydata.org/>
    [tqdm]: <https://tqdm.github.io/>
-   [pyenv]: <https://https://github.com/pyenv/pyenv-virtualenv/>
+   [pyenv]: <https://github.com/pyenv/pyenv-virtualenv/>
    [W Tang et al 2009 J. Phys.: Condens. Matter 21 084204]: <https://doi.org/10.1088/0953-8984/21/8/084204>
 
