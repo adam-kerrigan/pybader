@@ -1,6 +1,55 @@
 # pybader (v0.1.1)
 
-pyBader is a threaded implementation of grid-based Bader charge analysis. It performs grid-based Bader charge analysis as presented in W. Tang, E. Sanville, and G. Henkelman A grid-based Bader analysis algorithm without lattice bias, J. Phys.: Condens. Matter 21, 084204 (2009). Methods have been updated to allow threading over multiple threads.
+pyBader is a threaded implementation of grid-based Bader charge analysis. It performs grid-based Bader charge analysis as presented in [W Tang et al 2009 J. Phys.: Condens. Matter 21 084204]. Methods have been updated to allow threading over multiple threads.
+
+## Usage
+
+Installation will create 2 executeables (bader, bader-read) that can be used to run and read the output of the Bader calculation. To view available flags run:
+
+```sh
+$ bader --help
+$ bader-read --help
+```
+
+By default the program bader will output a file called bader.p which is a pickled Bader object. This file can be interpreted by the bader-read script. Human readable files can also be created in place of the bader.p file by supplying the flag --output dat to the main bader program. If you would like this to be the default behaviour (bader.p files contain the entire charge denisty and voxel to Bader volume and/or atom map so can be quite large) there is a config.ini file with sections for all the configurable variables. The location of this varies depending on platform but can be found by checking the pybader.\_\_config\_\_ variable. The current default settings are shown below
+```ini
+[DEFAULT]
+method = neargrid
+refine_method = neargrid
+vacuum_tol = None
+refine_mode = ('changed', 2)
+bader_volume_tol = 0.001
+export_mode = None
+prefix = ''
+output = pickle
+threads = 1
+fortran_format = 0
+speed_flag = False
+spin_flag = False
+```
+
+Check the examples folder and function doc strings for information on how to interface with the python module.
+
+```python
+import pybader
+from pybader import (
+    methods,
+    refinement,
+    thread_handlers,
+    interface,
+)
+import pybader.io
+from inspect import getmembers, ismodule
+
+help(pybader)
+help(methods)
+help(refinement)
+help(thread_handlers)
+help(interface)
+
+for name, module in getmemebers(pybader.io, ismodule):
+    help(module)
+```
 
 ## Requirements
 
@@ -60,3 +109,5 @@ MIT
    [Numba]: <https://numba.pydata.org/>
    [tqdm]: <https://tqdm.github.io/>
    [pyenv]: <https://https://github.com/pyenv/pyenv-virtualenv/>
+   [W Tang et al 2009 J. Phys.: Condens. Matter 21 084204]: <https://doi.org/10.1088/0953-8984/21/8/084204>
+

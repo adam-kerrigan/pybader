@@ -69,12 +69,14 @@ def bader():
     r = """How to refine points, check for all edge points or only updated
     points. Optional inclusion of an integer to specify how many interations to
     do, if not supplied iterate until no points change:
-    all | quick (default) [int]"""
+    all | changed (default) [int]"""
     ref = """Path to file containing a reference density, if two files are
     supplied the files will be read and then summed"""
     vac = """Tolerance used for assuming density is vacuum:
     auto (1E-3) | float"""
-    e = """Bader volumes or atoms to be exported:
+    e = """Bader volumes or atoms to be exported. Optional string to select
+    mode, 'sel' modes require at least one integer to be supplied indicating
+    volume or atom index:
     [ sel_atom (default) | sel_volume | all_atom | all_volume ] int [int ...]"""
     p = """Prefix to apply to the outputted file, defaults to none.
     Supplying nothing after this flag will set the output to the same directory
