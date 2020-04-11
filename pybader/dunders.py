@@ -19,6 +19,6 @@ in W. Tang, E. Sanville, and G. Henkelman A grid-based Bader analysis algorithm
 without lattice bias, J. Phys.: Condens. Matter 21, 084204 (2009). Methods have
 been updated to allow threading over multiple threads.
 """
-__config__ = (os.path.join('%LOCALAPPDATA%', 'pybader', 'config.ini')
+__config__ = (os.path.join(os.getenv('LOCALAPPDATA'), 'pybader', 'config.ini')
         if platform == 'win32' else
         os.path.expanduser(os.path.join('~', '.config', 'bader', 'config.ini')))
