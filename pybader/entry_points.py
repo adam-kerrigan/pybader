@@ -198,7 +198,7 @@ def bader():
         config['fortran_format'] += args['fortran_format']
         config['fortran_format'] %= 3
     if args.get('prefix') is not None and args.get('prefix'):
-        config['prefix'] = args['prefix'][0]
+        config['prefix'] = args['prefix']
     if args.get('output') is not None:
         config['output'] = args['output'][0]
 
