@@ -1,4 +1,4 @@
-# pybader (v0.1.2)
+# pybader (v0.1.3)
 
 pyBader is a threaded implementation of grid-based Bader charge analysis. It performs grid-based Bader charge analysis as presented in [W Tang et al 2009 J. Phys.: Condens. Matter 21 084204]. Methods have been updated to allow threading over multiple threads. It runs on POSIX systems, Mac OS, and Windows.
 
