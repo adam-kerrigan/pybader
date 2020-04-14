@@ -532,6 +532,22 @@ class Bader:
         footer += f"{np.sum(tot_charge):>{footer_width}.4f}"
         return header + line + table + line + footer
 
+    def load_config(self, key='DEFAULT'):
+        """Load a profile from the config.ini file.
+
+        args:
+            key: name of the profile to load
+        """
+        for k, value in python_config(key=key).items():
+            self.__setattr__(k, value)
+
+    def to_file(self):
+        """Pickle self and store at prefix + bader.p or 'out_dest' in info.
+        """
+        filename = self.info.get('out_dest', self.prefix + 'bader.p')
+        with open(filename, '+wb') as f:
+            dump(self, f)
+
     def write_volume(self, vol_num):
         """Write a specific Bader volume or atom to file.
         """
@@ -553,13 +569,6 @@ class Bader:
         self.info['write_function'](f"Bader-{self.export_mode[0]}-{num}",
                 self.atoms, self.lattice, density, self.info,
                 prefix=self.info['prefix'])
-
-    def to_file(self):
-        """Pickle self and store at prefix + bader.p or 'out_dest' in info.
-        """
-        filename = self.info.get('out_dest', self.prefix + 'bader.p')
-        with open(filename, '+wb') as f:
-            dump(self, f)
 
     def write_density(self):
         """Write the full density as stored in the density dict.
