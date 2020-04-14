@@ -320,7 +320,7 @@ def neargrid(density, volumes, idx, dist_mat, T_grad, i_c):
                 density_t[1] = density[pd[0], pd[1], pd[2]]
                 # if p is max in this axis grad is zero
                 # else grad is density[p+1] - density[p-1] / 2
-                if density_t[0] < max_val > density_t[1]:
+                if density_t[0] <= max_val >= density_t[1]:
                     grad[j] = 0.
                 else:
                     grad[j] = (density_t[0] - density_t[1]) / 2.
