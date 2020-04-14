@@ -54,8 +54,7 @@ def nostdout():
 
 
 def bader():
-    splash = f"""
-      Bader Charge Analysis ({__version__})
+    splash = f"""\n  Bader Charge Analysis ({__version__})
     """
 
     # source avail configs
