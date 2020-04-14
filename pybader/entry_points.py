@@ -213,10 +213,11 @@ def bader():
     # read in reference densities
     if args.get('reference') is not None:
         ftype = config.get('file_type', None)
+        bader.reference = np.zeros(bader.density.shape, dtype=np.float64)
         for ref in args['reference']:
             ref_den = Bader.from_file(ref, file_type=ftype).charge
             try:
-                bader.config['reference'][:] = ref_den
+                bader.reference[:] = ref_den
             except ValueError:
                 print("  ERROR: Reference and density have different grids.")
                 exit()
