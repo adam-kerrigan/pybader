@@ -1,7 +1,7 @@
 import numpy as np
 import matplotlib.pyplot as plt
 from pybader.interface import Bader
-from pybader.entry_points import nostdout
+from pybader.utils import nostdout
 import sys
 import os
 

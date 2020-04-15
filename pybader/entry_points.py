@@ -8,8 +8,6 @@ correctly if used out of turn.
 import numpy as np
 import sys
 import os
-from io import StringIO
-from contextlib import contextmanager
 from pickle import (
         load,
         dump,
@@ -32,6 +30,7 @@ from pybader.utils import (
         array_assign,
         array_merge,
         factor_3d,
+        nostdout,
         vacuum_assign,
         volume_extend,
         volume_merge,
@@ -43,14 +42,6 @@ from inspect import (
         ismodule,
         isfunction,
 )
-
-
-@contextmanager
-def nostdout():
-    save_stdout = sys.stdout
-    sys.stdout = StringIO()
-    yield
-    sys.stdout = save_stdout
 
 
 def bader():

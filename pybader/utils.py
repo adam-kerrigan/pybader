@@ -6,6 +6,8 @@ from numba.typed import Dict
 from time import sleep
 from tqdm import tqdm
 from shutil import get_terminal_size
+from io import StringIO
+from contextlib import contextmanager
 import sys
 
 
@@ -64,6 +66,16 @@ def python_format(a, prec, align=''):
     """
     format_ = (f' {{:{align}.{prec}E}}' * a.shape[1] + '\n') * a.shape[0]
     return format_.format(*a.flatten())
+
+
+@contextmanager
+def nostdout():
+    """Redirect stdout.
+    """
+    save_stdout = sys.stdout
+    sys.stdout = StringIO()
+    yield
+    sys.stdout = save_stdout
 
 
 def progress_bar_update(bar, progress, rate=0.05):
