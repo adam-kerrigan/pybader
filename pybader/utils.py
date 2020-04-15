@@ -119,7 +119,7 @@ def array_assign(old_array, old_array_len, array_len):
     returns:
         array
     """
-    array = np.zeros((array_len, 3), dtype=np.int64)
+    array = np.zeros((array_len, 3), dtype=old_array.dtype)
     for i in range(old_array_len):
         array[i] = old_array[i]
     return array
@@ -135,7 +135,7 @@ def array_merge(a, b):
     returns:
         array length la + lb
     """
-    out = np.zeros((a.shape[0] + b.shape[0], 3), dtype=np.int64)
+    out = np.zeros((a.shape[0] + b.shape[0], 3), dtype=b.dtype)
     for i in range(out.shape[0]):
         if i < a.shape[0]:
             out[i] = a[i]
@@ -210,6 +210,38 @@ def charge_sum(charge, volume, voxel_volume, density, volumes):
         atom_num = volumes[i]
         charge[atom_num] += density[i] / npts
         volume[atom_num] += voxel_volume
+
+
+def dtype_calc(max_val):
+    """Returns the dtype required to display the max val.
+
+    args:
+        max_val: set to negative to return signed int
+    """
+    dtype_list = [
+        ['int8', 'int16', 'int32', 'int64'],
+        ['uint8', 'uint16', 'uint32', 'uint64'],
+    ]
+    if max_val < 0:
+        max_val *= -2
+        dtype = dtype_list[1]
+    else:
+        dtype = dtype_list[0]
+    if max_val <= 255:
+        return dtype[0]
+    elif max_val <= 65535:
+        return dtype[1]
+    elif max_val <= 4294967295:
+        return dtype[2]
+    else:
+        return dtype[3]
+
+
+@njit(cache=True)
+def dtype_change(a, out):
+    for i in np.ndindex(a.shape):
+        out[i] = a[i]
+    return out
 
 
 @njit(cache=True, nogil=True)
@@ -331,14 +363,14 @@ def surface_dist(idx, shape, known, volumes, lattice, atoms, i_c):
 
 
 @njit(cache=True)
-def vacuum_assign(density, vac_tol):
+def vacuum_assign(density, volumes, vac_tol):
     """Create a voxel to vol_num map with masked values below a threshold.
 
     args:
         density: the density to be used as a reference
+        volumes: an empty array to be filled
         vac_tol: tolerance of what to consider vacuum
     """
-    volumes = np.zeros(density.shape, dtype=np.int64)
     for i in np.ndindex(volumes.shape):
         if density[i] <= vac_tol:
             volumes[i] = -1
@@ -382,7 +414,7 @@ def volume_extend(volumes, positive, new):
     """
     i = np.zeros(3, dtype=np.int64)
     vx, vy, vz = volumes.shape
-    out = np.zeros((new[0], new[1], new[2]), dtype=np.int64)
+    out = np.zeros((new[0], new[1], new[2]), dtype=volumes.dtype)
     for ix in range(vx):
         if ix < positive[0]:
             i[0] = ix

@@ -55,9 +55,10 @@ def ongrid(density, volumes, idx, dist_mat, T_grad, i_c):
     edge_num = 0
     path_num = 0
     # init arrays for bader maxima, edge crossings and current path
-    bader_max = np.zeros((vx, 3), dtype=np.int64)
-    edge_max = np.zeros((vx, 3), dtype=np.int64)
-    path = np.zeros((vx, 3), dtype=np.int64)
+    # idx is type set for the maximum int that can be stored here
+    bader_max = np.zeros((vx, 3), dtype=idx.dtype)
+    edge_max = np.zeros((vx, 3), dtype=idx.dtype)
+    path = np.zeros((vx, 3), dtype=idx.dtype)
     # init position arrays
     p = np.zeros(3, dtype=np.int64)
     pt = np.zeros(3, dtype=np.int64)
@@ -260,9 +261,10 @@ def neargrid(density, volumes, idx, dist_mat, T_grad, i_c):
     edge_num = 0
     path_num = 0
     # init arrays for bader maxima, edge crossings and current path
-    bader_max = np.zeros((vx, 3), dtype=np.int64)
-    edge_max = np.zeros((vx, 3), dtype=np.int64)
-    path = np.zeros((vx, 3), dtype=np.int64)
+    # idx is type set for the maximum int that can be stored here
+    bader_max = np.zeros((vx, 3), dtype=idx.dtype)
+    edge_max = np.zeros((vx, 3), dtype=idx.dtype)
+    path = np.zeros((vx, 3), dtype=idx.dtype)
     # init position arrays
     p = np.zeros(3, dtype=np.int64)
     pd = np.zeros(3, dtype=np.int64)
@@ -273,7 +275,7 @@ def neargrid(density, volumes, idx, dist_mat, T_grad, i_c):
     grad = np.zeros(3, dtype=np.float64)
     grad_dir = np.zeros(3, dtype=np.float64)
     max_grad = np.float64(0.)
-    known = np.zeros((vx, vy, vz), dtype=np.int64)
+    known = np.zeros((vx, vy, vz), dtype=np.int8)
     # keep track of the lead index for filling the progress bar
     lead_idx = 0
     # for index in range of the volume size

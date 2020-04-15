@@ -22,6 +22,7 @@ from pybader.thread_handlers import (
         assign_to_atoms,
         refine,
         surface_distance,
+        dtype_calc,
 )
 from inspect import (
         getmembers,
@@ -405,19 +406,21 @@ class Bader:
     def volumes_init(self):
         """Initialise the bader_volumes array using vacuum_tol.
         """
+        dtype = dtype_calc(np.prod(self.density.shape))
+        volumes = np.zeros(self.density.shape, dtype=dtype)
         try:
             vacuum_tol = self.vacuum_tol * self.lattice_volume
             volumes = vacuum_assign(self.reference, vacuum_tol)
         except TypeError:
-            volumes = np.zeros(self.density.shape, dtype=np.int64)
+            pass
         self.bader_volumes = volumes
 
     def bader_calc(self):
         """Launch the thread handler for the Bader calculation.
         """
-        self.bader_maxima = bader_calc(self.method, self.reference,
-                self.bader_volumes, self.distance_matrix, self.T_grad,
-                self.threads)
+        self.bader_maxima, self.bader_volumes = bader_calc(self.method, 
+                self.reference, self.bader_volumes, self.distance_matrix, 
+                self.T_grad, self.threads)
 
     def bader_to_atom_distance(self):
         """Launch the thread handler for assigning Bader volumes to atoms.

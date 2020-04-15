@@ -54,7 +54,7 @@ def neargrid(known, rknown, density, volumes, idx, dist_mat, T_grad, i_c):
     # init array length counters
     path_num = 0
     # init arrays for bader maxima, edge crossings and current path
-    path = np.zeros((kx, 3), dtype=np.int64)
+    path = np.zeros((kx, 3), dtype=idx.dtype)
     # init position arrays
     p = np.zeros(3, dtype=np.int64)
     pt = np.zeros(3, dtype=np.int64)

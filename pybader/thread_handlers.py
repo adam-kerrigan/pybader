@@ -9,15 +9,17 @@ from pybader import refinement
 from pybader import methods
 from .utils import (
     array_merge,
+    atom_assign,
+    dtype_calc,
+    dtype_change,
+    edge_assign,
+    factor_3d,
+    progress_bar_update,
+    surface_dist,
+    tqdm_wrap,
     volume_assign,
     volume_merge,
     volume_offset,
-    factor_3d,
-    edge_assign,
-    progress_bar_update,
-    tqdm_wrap,
-    atom_assign,
-    surface_dist,
 )
 
 
@@ -45,7 +47,7 @@ def bader_calc(method, density, volumes, dist_mat, T_grad, threads):
             for val in vt:
                 vols.append(np.ascontiguousarray(val))
     vol_s = np.array([v.shape for v in vols])
-    idx = np.zeros((thread, 3), dtype=np.int64, order='C')
+    idx = np.zeros((thread, 3), dtype=dtype_calc(max(density.shape)), order='C')
     c = -1
     k = (0, 0, 0)
     for i in np.ndindex(*split):
@@ -76,7 +78,10 @@ def bader_calc(method, density, volumes, dist_mat, T_grad, threads):
             i_c[0] += 1
         if edge_max.shape[0] > 0:
             edge_assign(edge_max, volumes)
-    return bader_max
+    if volumes.dtype != dtype_calc(-bader_max.shape[0]):
+        volumes = dtype_change(volumes,
+                np.zeros(volumes.shape, dtype=dtype_calc(-bader_max.shape[0])))
+    return bader_max, volumes
 
 
 def assign_to_atoms(bader_max, atoms, lattice, volumes, threads):
@@ -92,7 +97,7 @@ def assign_to_atoms(bader_max, atoms, lattice, volumes, threads):
     returns:
         bader_atoms: array of length Bader volumes linking Bader volume (index)
                      and atom (value)
-        bader_distance: array of same length linking Bader volume (index) and 
+        bader_distance: array of same length linking Bader volume (index) and
                      distance to atom (value)
         atoms_volumes: voxel to atom map
     """
@@ -121,6 +126,9 @@ def assign_to_atoms(bader_max, atoms, lattice, volumes, threads):
         volume_assign(atom_volumes, bader_atoms, i_c)
         while i_c[0] < pbar_tot:
             i_c[0] += 1
+    if atom_volumes.dtype != dtype_calc(-atoms.shape[0]):
+        atom_volumes = dtype_change(atom_volumes,
+                np.zeros(atom_volumes.shape, dtype=dtype_calc(-atoms.shape[0])))
     return bader_atoms, bader_distance, atom_volumes
 
 
@@ -130,7 +138,7 @@ def refine(method, refine_mode, density, volumes, dist_mat, T_grad, threads):
     args:
         method: name of method (name for name in refinement.__contains__)
         refine_mode: tuple of how to refine the edges (all | changed) and how m
-                     any iterations to refine for passing a negative value will 
+                     any iterations to refine for passing a negative value will
                      refine until no edges change
         density, volumes, dist_mat, T_grad: input for method
         threads: the number of threads to distribute over (Note: total number
@@ -145,7 +153,7 @@ def refine(method, refine_mode, density, volumes, dist_mat, T_grad, threads):
     if iters == 0:
         return
     print(f"\n  Refining {check_mode} edges:")
-    known = np.zeros(density.shape, dtype=np.int64)
+    known = np.zeros(density.shape, dtype=np.int8)
     edges = refinement.edge_find(known, density, volumes)
     if edges == 0:
         print("  No edges found.")
@@ -162,7 +170,7 @@ def refine(method, refine_mode, density, volumes, dist_mat, T_grad, threads):
                 knowns.append(np.ascontiguousarray(val))
     rknown = known.copy()
     known_s = np.array([k.shape for k in knowns])
-    idx = np.zeros((thread, 3), dtype=np.int64, order='C')
+    idx = np.zeros((thread, 3), dtype=dtype_calc(max(density.shape)), order='C')
     c = -1
     k = (0, 0, 0)
     for i in np.ndindex(*split):
@@ -198,7 +206,7 @@ def refine(method, refine_mode, density, volumes, dist_mat, T_grad, threads):
         del knw
         del chngd
         if check_mode.lower() == 'all':
-            known = np.zeros(density.shape, dtype=np.int64)
+            known = np.zeros(density.shape, dtype=np.int8)
             edges = refinement.edge_find(known, density, volumes)
         else:
             checked, edges = refinement.edge_check(known, density, volumes)
@@ -249,7 +257,7 @@ def surface_distance(density, volumes, lattice, atoms, threads):
     """
     thread = max([1, threads])
     print(f"\n  Calculating min. surface disance:")
-    known = np.zeros(volumes.shape, dtype=np.int64)
+    known = np.zeros(volumes.shape, dtype=np.int8)
     edges = refinement.edge_find(known, density, volumes)
     if edges == 0:
         print("  No edges found.")
@@ -257,7 +265,7 @@ def surface_distance(density, volumes, lattice, atoms, threads):
     zipped = zip(density.shape, factor_3d(thread))
     split = np.array([x for _, x in sorted(zipped, key=lambda x: x[0])])
     shape = np.zeros((*split, 3), dtype=np.int64, order='C')
-    idx = np.zeros((*split, 3), dtype=np.int64, order='C')
+    idx = np.zeros((*split, 3), dtype=dtype_calc(max(density.shape)), order='C')
     k = (0, 0, 0)
     for i in np.ndindex(*split):
         for j in range(3):
