@@ -236,9 +236,9 @@ def dtype_calc(max_val):
     ]
     if max_val < 0:
         max_val *= -2
-        dtype = dtype_list[1]
-    else:
         dtype = dtype_list[0]
+    else:
+        dtype = dtype_list[1]
     if max_val <= 255:
         return dtype[0]
     elif max_val <= 65535:
