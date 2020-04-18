@@ -1,3 +1,5 @@
+"""This module contains sample arguments for the jitable functions.
+"""
 import numpy as np
 from pybader import (
         methods,
