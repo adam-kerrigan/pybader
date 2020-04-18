@@ -146,8 +146,7 @@ def read(fn, orbitals=0):
     print(f"Time taken: {time() - t0:0.3f}s", end='\n\n')
     lattice *= bohr_to_ang
     atoms *= bohr_to_ang
-    lat_vol = np.abs(np.dot(lattice[0], np.cross(*lattice[1:])))
-    density['charge'] *= lat_vol / bohr_to_ang**3
+    density['charge'] *= ang_to_bohr**3
     file_info = {
             'filename': fn,
             'prefix': prefix,
@@ -184,14 +183,13 @@ def write(fn, atoms, lattice, density, file_info, prefix=None, suffix='.cube'):
     charge = density['charge']
     # convert to bohr
     atoms *= ang_to_bohr
-    lat_vol = np.abs(np.dot(lattice[0], np.cross(*lattice[1:])))
-    charge *= ang_to_bohr**3 / lat_vol
+    charge *= bohr_to_ang**3
     lattice *= ang_to_bohr
     lattice /= charge.shape
 
     buffer_size = charge.shape[2] // 6
-    buffer_remainder = charge.shape[2] % 6
-    buffer_flag = buffer_remainder != 0
+    buffer_rem = charge.shape[2] % 6
+    buffer_flag = buffer_rem != 0
 
     lattice_width = np.max(np.log10(np.abs(lattice[lattice != 0]))) + 9
     lattice_width = max([int(lattice_width), 9]) + 1
@@ -221,5 +219,5 @@ def write(fn, atoms, lattice, density, file_info, prefix=None, suffix='.cube'):
                 r = charge[i, j][:buffer_size * 6].reshape((buffer_size, 6))
                 out = output_format(r, 5)
                 if buffer_flag:
-                    out += output_format([charge[i, j][-buffer_rem:]], 5)
+                    out += output_format(np.array([charge[i, j][-buffer_rem:]]), 5)
                 f.write(out)
