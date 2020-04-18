@@ -24,7 +24,7 @@ if not os.path.isfile(__config__):
     # If no cached numba functions exits cache them
     recache = True
     for cache in resource_listdir('pybader', '__pycache__'):
-        if any(cache[-3:] == ext for ext in ['nbc', 'nbi']):
+        if False: #any(cache[-3:] == ext for ext in ['nbc', 'nbi']):
             recache = False
     if recache:
         func_map['cache_JIT']()
