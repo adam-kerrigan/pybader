@@ -5,6 +5,7 @@ function but is importable without it for use with ase. However it will not
 show as an available filetype unless installed.
 """
 from .cube import write
+import numpy as np
 try:
     from gpaw import restart
     GPAW_AVAIL = True
@@ -34,7 +35,7 @@ def read_obj(calc, gridref=4, spin_flag=False, fn='', prefix=''):
                 'spin': spin0 - spin1,
         }
     else:
-        denisty_dict = {
+        density_dict = {
                 'charge': calc.get_all_electron_density(gridrefinement=gridref)
         }
     lattice = np.zeros((3, 3), dtype=np.float64, order='C')
