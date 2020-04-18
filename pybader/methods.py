@@ -56,9 +56,9 @@ def ongrid(density, volumes, idx, dist_mat, T_grad, i_c):
     path_num = 0
     # init arrays for bader maxima, edge crossings and current path
     # idx is type set for the maximum int that can be stored here
-    bader_max = np.zeros((vx, 3), dtype=idx.dtype)
-    edge_max = np.zeros((vx, 3), dtype=idx.dtype)
-    path = np.zeros((vx, 3), dtype=idx.dtype)
+    bader_max = np.zeros((vx, 3), dtype=np.int64)
+    edge_max = np.zeros((vx, 3), dtype=np.int64)
+    path = np.zeros((vx, 3), dtype=np.int64)
     # init position arrays
     p = np.zeros(3, dtype=np.int64)
     pt = np.zeros(3, dtype=np.int64)
@@ -262,9 +262,9 @@ def neargrid(density, volumes, idx, dist_mat, T_grad, i_c):
     path_num = 0
     # init arrays for bader maxima, edge crossings and current path
     # idx is type set for the maximum int that can be stored here
-    bader_max = np.zeros((vx, 3), dtype=idx.dtype)
-    edge_max = np.zeros((vx, 3), dtype=idx.dtype)
-    path = np.zeros((vx, 3), dtype=idx.dtype)
+    bader_max = np.zeros((vx, 3), dtype=np.int64)
+    edge_max = np.zeros((vx, 3), dtype=np.int64)
+    path = np.zeros((vx, 3), dtype=np.int64)
     # init position arrays
     p = np.zeros(3, dtype=np.int64)
     pd = np.zeros(3, dtype=np.int64)

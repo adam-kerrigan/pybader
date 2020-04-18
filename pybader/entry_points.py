@@ -19,24 +19,20 @@ from pybader import (
         __version__,
         __doc__ as doc,
         __config__,
-        methods,
         io,
+        methods,
+        utils,
+        refinement,
 )
 from pybader.interface import (
         Bader,
         python_config,
 )
 from pybader.utils import (
-        array_assign,
-        array_merge,
-        factor_3d,
         nostdout,
-        vacuum_assign,
-        volume_extend,
-        volume_merge,
-        volume_offset,
         tqdm_wrap,
 )
+from pybader.jits import jit_functs
 from inspect import (
         getmembers,
         ismodule,
@@ -98,7 +94,9 @@ def bader():
     """
 
     bchoice = methods.__contains__
-    ichoice = [name for name, module in getmembers(io, ismodule)]
+    i_gen = (name for name, module in getmembers(io, ismodule)
+            if module.__extensions__ is not None)
+    ichoice = [name for name in i_gen]
     rchoice = ['all', 'changed']
     ochoice = ['pickle', 'dat']
     cchoice = config.keys()
@@ -170,7 +168,7 @@ def bader():
             else:
                 export_list = np.array(args['export'][1:], dtype=np.int64)
                 if args['export'][0] in export_check:
-                    export_type = args['export'][0]
+                    export_type = args['export'][0].split('_')[-1]
                 else:
                     print("  Unable to parse export type, using sel_atoms\n")
                     export_type = 'atoms'
@@ -218,7 +216,8 @@ def bader():
 
 def bader_read():
     description = "Tool for viewing the output of the bader program"
-    filename = "Path to file containing Bader output"
+    filename = """Path to file containing Bader output, if no path is supplied a
+    default value of './bader.p' is used"""
     a = "Whether to show the Bader atom infomation"
     v = "Whether to show the Bader volume infomation"
     e = """Bader volumes or atoms to be exported:
@@ -238,7 +237,7 @@ def bader_read():
     export_check = ['all_atoms', 'all_volumes', 'sel_atoms', 'sel_volumes']
 
     parser = ArgumentParser(description=description)
-    parser.add_argument('filename', nargs=1, help=filename)
+    parser.add_argument('filename', nargs='?', default='bader.p', help=filename)
     parser.add_argument('-a', '--atoms', action='store_true', help=a)
     parser.add_argument('-v', '--volume', action='store_true', help=v)
     parser.add_argument('-e', '--export', nargs='+', help=e)
@@ -247,9 +246,11 @@ def bader_read():
     parser.add_argument('-r', '--recast', action='store_true', help=r)
     args = vars(parser.parse_args())
 
-    with open(args['filename'][0], '+rb') as f:
+    with open(args['filename'], '+rb') as f:
         bader = load(f)
 
+    if args['fortran_format'] is not None:
+        bader.fortran_format = args['fortran_format'] % 3
     if args.get('export') is not None:
         try:
             export = np.array(args['export'], dtype=np.int64)
@@ -265,7 +266,7 @@ def bader_read():
             else:
                 export = np.array(args['export'][1:], dtype=np.int64)
                 if args['export'][0] in export_check:
-                    export_type = args['export'][0]
+                    export_type = args['export'][0].split('_')[-1]
                 else:
                     print("  Unable to parse export type, using sel_atoms\n")
                     export_type = 'atoms'
@@ -294,8 +295,6 @@ def bader_read():
     if args['volume']:
         print(bader.results(volume_flag=True))
     if args['density_write']:
-        if args['fortran_format'] is not None:
-            bader.fortran_format = args['fortran_format'] % 3
         bader.write_density()
     if args['atoms']:
         print(bader.results())
@@ -349,67 +348,24 @@ def config_writer():
 
 
 def JIT_caching():
-    with tqdm_wrap(total=18, desc="Caching JIT'd functions:", file=sys.stderr) as pbar:
-        # cache factor_3d
-        _ = factor_3d(18)
-        pbar.update(1)
-        # set up arrays
-        idx = np.zeros(3, dtype=np.int64, order='C')
-        i_c = np.zeros(1, dtype=np.int64)
-        positive_len = np.ascontiguousarray([10, 10, 10], dtype=np.int64)
-        extend_len = np.ascontiguousarray([20, 20, 20], dtype=np.int64)
-        atoms = np.ascontiguousarray([[.25, .25, .25], [.75, .75, .75]])
-        density = np.zeros((5, 5, 5), dtype=np.float64, order='C')
-        for i in np.ndindex(5, 5, 5):
-            density[i] = np.prod(i)
-        density = np.ascontiguousarray(np.pad(density, (0, 4), 'reflect'))
-        density = np.ascontiguousarray(np.pad(density, (0, 9), 'reflect'))
-        lattice = np.ascontiguousarray([[2, 0, 0], [2, 1, 0], [-5.2, 0.7, 8.1]])
-        voxel_lattice = lattice / density.shape
-        d = np.zeros((3, 3, 3, 3), dtype=np.float64)
-        d[1, :, :] += voxel_lattice[0]
-        d[2, :, :] -= voxel_lattice[0]
-        d[:, 1, :] += voxel_lattice[1]
-        d[:, 2, :] -= voxel_lattice[1]
-        d[:, :, 1] += voxel_lattice[2]
-        d[:, :, 2] -= voxel_lattice[2]
-        d = d**2
-        d = np.sum(d, axis=3)
-        d[d != 0] = d[d != 0]**-.5
-        inv_l = np.linalg.inv(voxel_lattice)
-        T_grad = np.matmul(inv_l.T, inv_l)
-        # cache array_assign
-        atoms = array_assign(atoms, 1, 1)
-        pbar.update(1)
-        # cache array_merge
-        _ = array_merge(atoms, atoms)
-        pbar.update(1)
-        # cache vacuum_assign
-        volumes = vacuum_assign(density, 1)
-        pbar.update(1)
-        # cache volume_extend
-        large = volume_extend(volumes, positive_len, extend_len)
-        pbar.update(1)
-        # cache volume_merge
-        volume_merge(large, volumes, idx, (5, 5, 5))
-        pbar.update(1)
-        # cache volume_offset
-        volume_offset(large, 3, 1)
-        pbar.update(1)
-        # set up Bader class
-        density_dict = {
-            'charge': density
-        }
-        file_info = {
-            'out_dest': os.devnull,
-            'voxel_offset': (0, 0, 0),
-        }
-        bader = Bader(density_dict, lattice, atoms, file_info)
-        bader.threads = 8
-        with nostdout():
-            bader()
-        pbar.update(10)
-        bader.method = 'ongrid'
-        with nostdout():
-            bader()
-        pbar.update(1)
+    desc = "Caching JIT'd functions:"
+    tot = 0
+    for _, val in jit_functs['methods'].items():
+        tot += len(val)
+    for _, val in jit_functs['refinement'].items():
+        tot += len(val)
+    for _, val in jit_functs['utils'].items():
+        tot += len(val)
+    with tqdm_wrap(total=tot, desc=desc, file=sys.stderr) as pbar:
+            for key, val in jit_functs['utils'].items():
+                for args in val:
+                    getattr(utils, key)(*args)
+                    pbar.update(1)
+            for key, val in jit_functs['methods'].items():
+                for args in val:
+                    getattr(methods, key)(*args)
+                    pbar.update(1)
+            for key, val in jit_functs['refinement'].items():
+                for args in val:
+                    getattr(refinement, key)(*args)
+                    pbar.update(1)

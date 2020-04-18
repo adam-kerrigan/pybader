@@ -1,7 +1,10 @@
 """Misc utility functions.
 """
 import numpy as np
-from numba import njit, types
+from numba import (
+        njit,
+        types,
+)
 from numba.typed import Dict
 from time import sleep
 from tqdm import tqdm
@@ -9,6 +12,31 @@ from shutil import get_terminal_size
 from io import StringIO
 from contextlib import contextmanager
 import sys
+
+
+def dtype_calc(max_val):
+    """Returns the dtype required to display the max val.
+
+    args:
+        max_val: set to negative to return signed int
+    """
+    dtype_list = [
+        ['int8', 'int16', 'int32', 'int64'],
+        ['uint8', 'uint16', 'uint32', 'uint64'],
+    ]
+    if max_val < 0:
+        max_val *= -2
+        dtype = dtype_list[0]
+    else:
+        dtype = dtype_list[1]
+    if max_val <= 255:
+        return dtype[0]
+    elif max_val <= 65535:
+        return dtype[1]
+    elif max_val <= 4294967295:
+        return dtype[2]
+    else:
+        return dtype[3]
 
 
 def fortran_format(a, prec):
@@ -217,36 +245,12 @@ def charge_sum(charge, volume, voxel_volume, density, volumes):
         density: a reference density for charge summation
         volumes: a voxel to vol_num map
     """
-    npts = density.shape[0] * density.shape[1] * density.shape[2]
     for i in np.ndindex(volumes.shape):
         atom_num = volumes[i]
-        charge[atom_num] += density[i] / npts
+        charge[atom_num] += density[i]
         volume[atom_num] += voxel_volume
-
-
-def dtype_calc(max_val):
-    """Returns the dtype required to display the max val.
-
-    args:
-        max_val: set to negative to return signed int
-    """
-    dtype_list = [
-        ['int8', 'int16', 'int32', 'int64'],
-        ['uint8', 'uint16', 'uint32', 'uint64'],
-    ]
-    if max_val < 0:
-        max_val *= -2
-        dtype = dtype_list[0]
-    else:
-        dtype = dtype_list[1]
-    if max_val <= 255:
-        return dtype[0]
-    elif max_val <= 65535:
-        return dtype[1]
-    elif max_val <= 4294967295:
-        return dtype[2]
-    else:
-        return dtype[3]
+    for j in range(charge.shape[0]):
+        charge[j] *= voxel_volume
 
 
 @njit(cache=True)

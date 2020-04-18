@@ -145,10 +145,8 @@ class Bader:
         self._file_info = file_info
         self.density = self.charge if self.charge is not None else self.spin
         self.reference = self.density
-        for key, value in python_config().items():
-            self.__setattr__(key, value)
-        for key, value in kwargs.items():
-            self.__setattr__(key, value)
+        self.load_config()
+        self.apply_config(kwargs)
 
     @classmethod
     def from_file(cls, filename, file_type=None, **kwargs):
@@ -169,7 +167,8 @@ class Bader:
             file_conf = {k: v for k, v in kwargs.items() if k in io_.__args__}
             return cls(*io_.read(filename, **file_conf), **kwargs)
         else:
-            io_packages = getmembers(io, ismodule)
+            io_packages = (p for p in getmembers(io, ismodule)
+                    if p[1].__extensions__ is not None)
             for package in io_packages:
                 for ext in package[1].__extensions__:
                     io_ = package[1] if ext in filename.lower() else None
@@ -180,8 +179,8 @@ class Bader:
                         }
                         return cls(*io_.read(filename, **file_conf), **kwargs)
         print("  No clear file type found; file will be read as chgcar.")
-        file_conf = {k: v for k, v in kwargs.items() if k in io.chgcar.__args__}
-        return cls(*io.chgcar.read(filename, **file_conf), **kwargs)
+        file_conf = {k: v for k, v in kwargs.items() if k in io.vasp.__args__}
+        return cls(*io.vasp.read(filename, **file_conf), **kwargs)
 
     @classmethod
     def from_dict(cls, d):
@@ -222,6 +221,20 @@ class Bader:
         """Access the spin density in the density dictionary.
         """
         return self._density.get('spin', None)
+
+    @property
+    def spin_bool(self):
+        """Whether to perfom on the spin density also.
+
+        This should only return true if spin is not None.
+        """
+        return self.spin_flag if self.spin is not None else False
+
+    @spin_bool.setter
+    def spin_bool(self, flag):
+        """Set the spin flag.
+        """
+        self.spin_flag = flag
 
     @property
     def lattice(self):
@@ -336,8 +349,7 @@ class Bader:
         args:
             keyword arguements accepted are listed in the __slots__ attribute
         """
-        for key, value in kwargs.items():
-            self.__setattr__(key, value)
+        self.apply_config(kwargs)
         self.volumes_init()
         self.bader_calc()
         if not self.speed_flag:
@@ -348,7 +360,7 @@ class Bader:
                     dtype=np.float64)
             charge_sum(self.bader_charge, self.bader_volume, self.voxel_volume,
                     self.density, self.bader_volumes)
-            if self.spin_flag:
+            if self.spin_bool:
                 self.bader_spin = np.zeros(self.bader_maxima.shape[0] + 1,
                         dtype=np.float64)
                 self.bader_volume = np.zeros(self.bader_maxima.shape[0] + 1,
@@ -360,11 +372,13 @@ class Bader:
             self.refine_volumes(self.atoms_volumes)
             del(self.bader_volumes)
         self.min_surface_distance()
-        self.atoms_charge = np.zeros(self.atoms.shape[0] + 1, dtype=np.float64)
-        self.atoms_volume = np.zeros(self.atoms.shape[0] + 1, dtype=np.float64)
+        self.atoms_charge = np.zeros(self.atoms.shape[0] + 1,
+                dtype=np.float64)
+        self.atoms_volume = np.zeros(self.atoms.shape[0] + 1,
+                dtype=np.float64)
         charge_sum(self.atoms_charge, self.atoms_volume, self.voxel_volume,
                 self.density, self.atoms_volumes)
-        if self.spin_flag:
+        if self.spin_bool:
             self.atoms_spin = np.zeros(self.atoms.shape[0] + 1,
                     dtype=np.float64)
             self.atoms_volume = np.zeros(self.atoms.shape[0] + 1,
@@ -406,20 +420,20 @@ class Bader:
     def volumes_init(self):
         """Initialise the bader_volumes array using vacuum_tol.
         """
-        dtype = dtype_calc(np.prod(self.density.shape))
+        dtype = dtype_calc(-np.prod(self.density.shape))
         volumes = np.zeros(self.density.shape, dtype=dtype)
         try:
-            vacuum_tol = self.vacuum_tol * self.lattice_volume
+            vacuum_tol = np.float64(self.vacuum_tol)
             volumes = vacuum_assign(self.reference, vacuum_tol)
-        except TypeError:
+        except (ValueError, TypeError):
             pass
         self.bader_volumes = volumes
 
     def bader_calc(self):
         """Launch the thread handler for the Bader calculation.
         """
-        self.bader_maxima, self.bader_volumes = bader_calc(self.method, 
-                self.reference, self.bader_volumes, self.distance_matrix, 
+        self.bader_maxima, self.bader_volumes = bader_calc(self.method,
+                self.reference, self.bader_volumes, self.distance_matrix,
                 self.T_grad, self.threads)
 
     def bader_to_atom_distance(self):
@@ -453,14 +467,14 @@ class Bader:
         if volume_flag:
             charge = self.bader_charge
             volume = self.bader_volume
-            if self.spin_flag:
+            if self.spin_bool:
                 spin = self.bader_spin
             atoms = self.bader_maxima
             dist = self.bader_distance
         else:
             charge = self.atoms_charge
             volume = self.atoms_volume
-            if self.spin_flag:
+            if self.spin_bool:
                 spin = self.atoms_spin
             atoms = self.atoms_fractional
             dist = self.atoms_surface_distance
@@ -470,7 +484,7 @@ class Bader:
         m = volume[:-1] != 0
         volume_width = np.max(np.log10(volume[:-1][m]) + 1)
         volume_width = max([int(volume_width), 1]) + 8
-        if self.spin_flag:
+        if self.spin_bool:
             m = spin[:-1] != 0
             spin_width = np.max(np.log10(np.abs(spin[:-1][m])) + 1)
             spin_width = max([int(spin_width), 1]) + 9
@@ -484,14 +498,14 @@ class Bader:
             h[0] = ' #'
         if not charge_width % 2:
             h[4] = ' Charge'
-        if self.spin_flag and not spin_width % 2:
+        if self.spin_bool and not spin_width % 2:
             h[5] = ' Spin'
         if volume_width % 2:
             h[6] = ' Volume'
         if dist_width % 2:
             h[7] = ' Dist'
         header_format = f"{{:^{atom_width}s}}" + "{:^8s}" * 3
-        if self.spin_flag:
+        if self.spin_bool:
             header_format += f"{{:^{charge_width}s}}{{:^{spin_width}s}}"
         else:
             header_format += f"{{:^{charge_width}s}}"
@@ -508,7 +522,7 @@ class Bader:
             a, b, c = atom
             table += f"{i:>{atom_width}}{a:> 8.4f}{b:> 8.4f}{c:> 8.4f}"
             table += f"{charge[i]:> {charge_width}.6f}"
-            if self.spin_flag:
+            if self.spin_bool:
                 table += f"{spin[i]:> {spin_width}.6f}"
             table += f"{volume[i]:>{volume_width}.6f}"
             table += f"{dist[i]:>{dist_width}.6f}"
@@ -519,14 +533,14 @@ class Bader:
         footer_width = int(elec_width)
         if self.vacuum_tol is not None:
             vac_items = [charge[-1], volume[-1]]
-            if self.spin_flag:
+            if self.spin_bool:
                 vac_items.append(spin[-1] * 100)
             vac_width = np.max(np.log10(np.abs(vac_items))).astype(int) + 8
             if vac_width > footer_width:
                 footer_width = vac_width
             footer = f" Vacuum Charge:"
             footer += f"{charge[-1]:>{footer_width + 6}.4f}\n"
-            if self.spin_flag:
+            if self.spin_bool:
                 footer += f" Vacuum Spin:"
                 footer += f"{spin[-1]:>{footer_width + 8}.4f}\n"
             footer += f" Vacuum Volume:"
@@ -535,14 +549,25 @@ class Bader:
         footer += f"{np.sum(tot_charge):>{footer_width}.4f}"
         return header + line + table + line + footer
 
+    def apply_config(self, d):
+        """Apply a config dictionary to the class.
+
+        args:
+            d: dictionary of settings to be applied
+
+        -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
+        Future: This should probably type check
+        """
+        for k, value in d.items():
+            self.__setattr__(k, value)
+
     def load_config(self, key='DEFAULT'):
         """Load a profile from the config.ini file.
 
         args:
             key: name of the profile to load
         """
-        for k, value in python_config(key=key).items():
-            self.__setattr__(k, value)
+        self.apply_config(python_config(key=key))
 
     def to_file(self):
         """Pickle self and store at prefix + bader.p or 'out_dest' in info.

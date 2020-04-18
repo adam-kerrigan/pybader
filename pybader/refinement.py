@@ -2,7 +2,7 @@
 """Bader edge refinement methods.
 
 This module is has __contains__ due to @njit hiding the names of the functions.
-All functions in this module should have the same arguments as to help be called 
+All functions in this module should have the same arguments as to help be called
 by refine in the thread_handlers module.
 """
 import numpy as np
@@ -13,6 +13,7 @@ from .utils import (
 )
 
 __contains__ = ['neargrid']
+
 
 @njit(cache=True, nogil=True)
 def neargrid(known, rknown, density, volumes, idx, dist_mat, T_grad, i_c):
@@ -30,7 +31,7 @@ def neargrid(known, rknown, density, volumes, idx, dist_mat, T_grad, i_c):
         density: read-only array of reference charge density.
         volumes: array same shape as density to store bader volume indicators.
         idx: the offset of the origin for the chunk (threading).
-        dist_mat: rank-3 tensor of distances for moving in index direction 
+        dist_mat: rank-3 tensor of distances for moving in index direction
         T_grad: transform matrix for converting gradient to direct basis
         i_c: index counter for tqdm bar.
     returns:
@@ -54,7 +55,7 @@ def neargrid(known, rknown, density, volumes, idx, dist_mat, T_grad, i_c):
     # init array length counters
     path_num = 0
     # init arrays for bader maxima, edge crossings and current path
-    path = np.zeros((kx, 3), dtype=idx.dtype)
+    path = np.zeros((kx, 3), dtype=np.int64)
     # init position arrays
     p = np.zeros(3, dtype=np.int64)
     pt = np.zeros(3, dtype=np.int64)

@@ -1,6 +1,7 @@
 """Functions for handling the threading of intensive calculations.
 """
 import numpy as np
+from numba import typeof
 from concurrent.futures import (
     ThreadPoolExecutor,
     as_completed,
@@ -47,7 +48,7 @@ def bader_calc(method, density, volumes, dist_mat, T_grad, threads):
             for val in vt:
                 vols.append(np.ascontiguousarray(val))
     vol_s = np.array([v.shape for v in vols])
-    idx = np.zeros((thread, 3), dtype=dtype_calc(max(density.shape)), order='C')
+    idx = np.zeros((thread, 3), dtype=np.int64, order='C')
     c = -1
     k = (0, 0, 0)
     for i in np.ndindex(*split):
@@ -170,7 +171,7 @@ def refine(method, refine_mode, density, volumes, dist_mat, T_grad, threads):
                 knowns.append(np.ascontiguousarray(val))
     rknown = known.copy()
     known_s = np.array([k.shape for k in knowns])
-    idx = np.zeros((thread, 3), dtype=dtype_calc(max(density.shape)), order='C')
+    idx = np.zeros((thread, 3), dtype=np.int64, order='C')
     c = -1
     k = (0, 0, 0)
     for i in np.ndindex(*split):
@@ -217,7 +218,7 @@ def refine(method, refine_mode, density, volumes, dist_mat, T_grad, threads):
             for k in rknown:
                 kt = np.array_split(k, split[i], axis=i)
                 for val in kt:
-                    knowns.append(val)
+                    knowns.append(np.ascontiguousarray(val))
         rknown = known.copy()
         i_c = np.zeros(1, dtype=np.int64, order='C')
         pbar_tot = edges
@@ -265,7 +266,7 @@ def surface_distance(density, volumes, lattice, atoms, threads):
     zipped = zip(density.shape, factor_3d(thread))
     split = np.array([x for _, x in sorted(zipped, key=lambda x: x[0])])
     shape = np.zeros((*split, 3), dtype=np.int64, order='C')
-    idx = np.zeros((*split, 3), dtype=dtype_calc(max(density.shape)), order='C')
+    idx = np.zeros((*split, 3), dtype=np.int64, order='C')
     k = (0, 0, 0)
     for i in np.ndindex(*split):
         for j in range(3):
