@@ -26,16 +26,16 @@ def read(fn, charge_flag=True, spin_flag=False, buffer_size=64):
     augmentation charges.
 
     args:
-        fn: name of the file to open.
-        charge_flag: whether to read the charge density.
-        spin_flag: whether to read the spin density.
-        buffer_size: amount of lines to be read at once.
+        fn: name of the file to open
+        charge_flag: whether to read the charge density
+        spin_flag: whether to read the spin density
+        buffer_size: amount of lines to be read at once
 
     return:
-        density: dict containing 3d-arrays for charge and spin densities.
-        lattice: 3x3 array with lattice vectors as rows.
-        atoms: atomic positions in Cartesian basis.
-        file_info: information about the file type and the write function.
+        density: dict containing 3d-arrays for charge and spin densities
+        lattice: 3x3 array with lattice vectors as rows
+        atoms: atomic positions in Cartesian basis
+        file_info: information about the file type and the write function
     """
     t0 = time()
     density = dict()
@@ -144,11 +144,14 @@ def read(fn, charge_flag=True, spin_flag=False, buffer_size=64):
             lattice[i] *= scale[i]
     # put atoms in Cartesian basis.
     atoms = np.dot(atoms, lattice)
+    lattice_vol = np.dot(lattice[0], np.cross(*lattice[1:]))
+    for key in density:
+        density[key] /= lattice_vol
     print(f"Time taken: {time() - t0:0.3f}s", end='\n\n')
     file_info = {
             'filename': filename,
             'prefix': prefix,
-            'file_type': 'CHGCAR',
+            'file_type': 'VASP',
             'buffer_size': buffer_size,
             'write_function': write,
             'element_nums': atom_nums,
@@ -181,7 +184,10 @@ def write(fn, atoms, lattice, density, file_info, prefix='', suffix='-CHGCAR'):
             return python_format(a, p, ' ')
     else:
         output_format = python_format
-    buffer_size = file_info['buffer_size']
+    buffer_size = file_info.get('buffer_size', 64)
+    lattice_vol = np.dot(lattice[0], np.cross(*lattice[1:]))
+    for key in density:
+        density[key] *= lattice_vol
     if file_info['charge_flag']:
         charge = density.get('charge')
         grid = np.prod(charge.shape)
