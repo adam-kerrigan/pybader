@@ -21,10 +21,5 @@ if not os.path.isfile(__config__):
         func_map.update({ep.name: ep.load()})
     print("Done.")
     func_map['create_config']()
-    # If no cached numba functions exits cache them
-    recache = True
-    for cache in resource_listdir('pybader', '__pycache__'):
-        if False: #any(cache[-3:] == ext for ext in ['nbc', 'nbi']):
-            recache = False
-    if recache:
-        func_map['cache_JIT']()
+    # cache the jitable functions
+    func_map['cache_JIT']()
