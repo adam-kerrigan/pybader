@@ -354,37 +354,13 @@ class Bader:
         self.bader_calc()
         if not self.speed_flag:
             self.refine_volumes(self.bader_volumes)
-            self.bader_charge = np.zeros(self.bader_maxima.shape[0] + 1,
-                    dtype=np.float64)
-            self.bader_volume = np.zeros(self.bader_maxima.shape[0] + 1,
-                    dtype=np.float64)
-            charge_sum(self.bader_charge, self.bader_volume, self.voxel_volume,
-                    self.density, self.bader_volumes)
-            if self.spin_bool:
-                self.bader_spin = np.zeros(self.bader_maxima.shape[0] + 1,
-                        dtype=np.float64)
-                self.bader_volume = np.zeros(self.bader_maxima.shape[0] + 1,
-                        dtype=np.float64)
-                charge_sum(self.bader_spin, self.bader_volume,
-                        self.voxel_volume, self.density, self.bader_volumes)
+            self.sum_volumes(bader=True)
         self.bader_to_atom_distance()
         if self.speed_flag:
             self.refine_volumes(self.atoms_volumes)
             del(self.bader_volumes)
         self.min_surface_distance()
-        self.atoms_charge = np.zeros(self.atoms.shape[0] + 1,
-                dtype=np.float64)
-        self.atoms_volume = np.zeros(self.atoms.shape[0] + 1,
-                dtype=np.float64)
-        charge_sum(self.atoms_charge, self.atoms_volume, self.voxel_volume,
-                self.density, self.atoms_volumes)
-        if self.spin_bool:
-            self.atoms_spin = np.zeros(self.atoms.shape[0] + 1,
-                    dtype=np.float64)
-            self.atoms_volume = np.zeros(self.atoms.shape[0] + 1,
-                    dtype=np.float64)
-            charge_sum(self.atoms_spin, self.atoms_volume, self.voxel_volume,
-                    self.spin, self.atoms_volumes)
+        self.sum_volumes()
         if self.export_mode is not None:
             print(f"\n  Writing Bader {self.export_mode[0]} to file:")
             if self.export_mode[0] == 'volumes':
@@ -448,6 +424,41 @@ class Bader:
         """
         refine(self.refine_method, self.refine_mode, self.reference, volumes,
                 self.distance_matrix, self.T_grad, self.threads)
+
+    def sum_volumes(self, bader=False):
+        """Sum the density and volume in the Bader volumes/atoms.
+
+        args:
+            bader: bool for doing bader volumes (True) or atoms (False)
+        """
+        if bader:
+            self.bader_charge = np.zeros(self.bader_maxima.shape[0] + 1,
+                    dtype=np.float64)
+            self.bader_volume = np.zeros(self.bader_maxima.shape[0] + 1,
+                    dtype=np.float64)
+            charge_sum(self.bader_charge, self.bader_volume, self.voxel_volume,
+                    self.density, self.bader_volumes)
+            if self.spin_bool:
+                self.bader_spin = np.zeros(self.bader_maxima.shape[0] + 1,
+                        dtype=np.float64)
+                self.bader_volume = np.zeros(self.bader_maxima.shape[0] + 1,
+                        dtype=np.float64)
+                charge_sum(self.bader_spin, self.bader_volume,
+                        self.voxel_volume, self.density, self.bader_volumes)
+        else:
+            self.atoms_charge = np.zeros(self.atoms.shape[0] + 1,
+                    dtype=np.float64)
+            self.atoms_volume = np.zeros(self.atoms.shape[0] + 1,
+                    dtype=np.float64)
+            charge_sum(self.atoms_charge, self.atoms_volume, self.voxel_volume,
+                    self.density, self.atoms_volumes)
+            if self.spin_bool:
+                self.atoms_spin = np.zeros(self.atoms.shape[0] + 1,
+                        dtype=np.float64)
+                self.atoms_volume = np.zeros(self.atoms.shape[0] + 1,
+                        dtype=np.float64)
+                charge_sum(self.atoms_spin, self.atoms_volume,
+                        self.voxel_volume, self.spin, self.atoms_volumes)
 
     def min_surface_distance(self):
         """Launch the thread handler for calculating the min. surface distance.
