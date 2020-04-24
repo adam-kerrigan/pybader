@@ -31,6 +31,7 @@ requirements = [
     'tqdm',
     'numba',
     'numpy',
+    'pandas',
 ]
 
 # Entry points for console scripts
