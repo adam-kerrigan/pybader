@@ -1,4 +1,4 @@
-# pybader (v0.3.3)
+# pybader (v0.3.4)
 
 pybader is a threaded implementation of grid-based Bader charge analysis. It performs grid-based Bader charge analysis as presented in [W Tang et al 2009 J. Phys.: Condens. Matter 21 084204]. Methods have been updated to allow threading over multiple threads. It runs on POSIX systems, Mac OS, and Windows.
 
@@ -58,6 +58,7 @@ pyBader requires a small number of open source projects to work properly, if usi
 * [Numpy] - NumPy is the fundamental package for scientific computing with Python.
 * [Numba] - A Just-In-Time Compiler for Numerical Functions in Python.
 * [tqdm] - A Fast, Extensible Progress Bar for Python and CLI.
+* [pandas] - A Library providing high-performance, easy-to-use data structures and data analysis tools for the Python programming language.
 
 ## Installation
 
@@ -108,6 +109,7 @@ MIT
    [Numpy]: <https://numpy.org/>
    [Numba]: <https://numba.pydata.org/>
    [tqdm]: <https://tqdm.github.io/>
+   [pandas]: <https://pandas.pydata.org/>
    [pyenv]: <https://github.com/pyenv/pyenv-virtualenv/>
    [W Tang et al 2009 J. Phys.: Condens. Matter 21 084204]: <https://doi.org/10.1088/0953-8984/21/8/084204>
 
