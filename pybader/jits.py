@@ -69,7 +69,8 @@ utils_jit = {
                 array(d2), array(1, dtype=ints[-1])) for I in ints],
         ],
     'vacuum_assign': [
-            *[(array(d3), array(d3, dtype=I), floats[-1](0)) for I in ints],
+            *[(array(d3), array(d3, dtype=I), floats[-1](0), array(d3),
+                floats[-1](0)) for I in ints],
         ],
     'volume_assign': [
             *[(array(d3, dtype=I, val=-1), array(1, dtype=ints[-1]),

@@ -4,6 +4,7 @@ Contains the Bader class, dictionaries containing the attributes of the Bader
 class along with their types and a config file converter.
 """
 import numpy as np
+import pandas as pd
 from pickle import dump
 from ast import literal_eval
 from configparser import ConfigParser
@@ -37,6 +38,9 @@ private_attributes = {
         '_atoms': np.ndarray,
         '_file_info': dict,
         '_bader_maxima': np.ndarray,
+        '_vacuum_charge': float,
+        '_vacuum_volume': float,
+        '_dataframe': pd.DataFrame
 }
 
 
@@ -143,6 +147,7 @@ class Bader:
         self._lattice = lattice
         self._atoms = atoms
         self._file_info = file_info
+        self._dataframe = None
         self.density = self.charge if self.charge is not None else self.spin
         self.reference = self.density
         self.load_config()
@@ -343,6 +348,69 @@ class Bader:
             print("  ERROR: bader_maxima not yet set.")
             return
 
+    @property
+    def vacuum_charge(self):
+        return getattr(self, '_vacuum_charge', 0.)
+
+    @vacuum_charge.setter
+    def vacuum_charge(self, value):
+        self._vacuum_charge = value
+
+    @property
+    def vacuum_volume(self):
+        return getattr(self, '_vacuum_volume', 0.)
+
+    @vacuum_volume.setter
+    def vacuum_volume(self, value):
+        self._vacuum_volume = value
+
+    @property
+    def dataframe(self):
+        if self._dataframe is None:
+            a = pd.Series(self.atoms_fractional[:, 0], name='a')
+            b = pd.Series(self.atoms_fractional[:, 1], name='b')
+            c = pd.Series(self.atoms_fractional[:, 2], name='c')
+            charge = pd.Series(self.atoms_charge, name='Charge')
+            volume = pd.Series(self.atoms_volume, name='Volume')
+            distance = pd.Series(self.atoms_surface_distance, name='Distance')
+            if self.spin_bool:
+                spin = pd.Series(self.atoms_spin, name='Spin')
+            if not self.speed_flag:
+                a = a.append(
+                        pd.Series(self.bader_maxima_fractional[:, 0], name='a'),
+                        )
+                b = b.append(
+                        pd.Series(self.bader_maxima_fractional[:, 0], name='b'),
+                        )
+                c = c.append(
+                        pd.Series(self.bader_maxima_fractional[:, 0], name='c'),
+                        )
+                charge = charge.append(
+                        pd.Series(self.bader_charge, name='Charge'),
+                        )
+                volume = volume.append(
+                        pd.Series(self.bader_volume, name='Volume'),
+                        )
+                distance = distance.append(
+                        pd.Series(self.bader_distance, name='Distance'),
+                        )
+                if self.spin_bool:
+                    spin = spin.append(
+                            pd.Series(self.bader_spin, name='Spin'),
+                            )
+            if self.spin_bool:
+                self.dataframe = pd.concat(
+                        [a, b, c, charge, spin, volume, distance],
+                        axis=1)
+            else:
+                self.dataframe = pd.concat([a, b, c, charge, volume, distance],
+                        axis=1)
+        return self._dataframe
+
+    @dataframe.setter
+    def dataframe(self, df):
+        self._dataframe = df
+
     def __call__(self, **kwargs):
         """Run the Bader calculation on self.
 
@@ -400,10 +468,15 @@ class Bader:
         volumes = np.zeros(self.density.shape, dtype=dtype)
         try:
             vacuum_tol = np.float64(self.vacuum_tol)
-            volumes = vacuum_assign(self.reference, vacuum_tol)
-        except (ValueError, TypeError):
-            pass
-        self.bader_volumes = volumes
+            volumes, vacuum_charge, vacuum_volume = vacuum_assign(
+                    self.reference, volumes, vacuum_tol, self.density,
+                    self.voxel_volume)
+            self.vacuum_charge = vacuum_charge
+            self.vacuum_volume = vacuum_volume
+        except (ValueError, TypeError) as e:
+            print(f"  VACUUM_TOL ERROR: {self.vacuum_tol} is not float")
+        finally:
+            self.bader_volumes = volumes
 
     def bader_calc(self):
         """Launch the thread handler for the Bader calculation.
@@ -432,30 +505,30 @@ class Bader:
             bader: bool for doing bader volumes (True) or atoms (False)
         """
         if bader:
-            self.bader_charge = np.zeros(self.bader_maxima.shape[0] + 1,
+            self.bader_charge = np.zeros(self.bader_maxima.shape[0],
                     dtype=np.float64)
-            self.bader_volume = np.zeros(self.bader_maxima.shape[0] + 1,
+            self.bader_volume = np.zeros(self.bader_maxima.shape[0],
                     dtype=np.float64)
             charge_sum(self.bader_charge, self.bader_volume, self.voxel_volume,
                     self.density, self.bader_volumes)
             if self.spin_bool:
-                self.bader_spin = np.zeros(self.bader_maxima.shape[0] + 1,
+                self.bader_spin = np.zeros(self.bader_maxima.shape[0],
                         dtype=np.float64)
-                self.bader_volume = np.zeros(self.bader_maxima.shape[0] + 1,
+                self.bader_volume = np.zeros(self.bader_maxima.shape[0],
                         dtype=np.float64)
                 charge_sum(self.bader_spin, self.bader_volume,
-                        self.voxel_volume, self.density, self.bader_volumes)
+                        self.voxel_volume, self.spin, self.bader_volumes)
         else:
-            self.atoms_charge = np.zeros(self.atoms.shape[0] + 1,
+            self.atoms_charge = np.zeros(self.atoms.shape[0],
                     dtype=np.float64)
-            self.atoms_volume = np.zeros(self.atoms.shape[0] + 1,
+            self.atoms_volume = np.zeros(self.atoms.shape[0],
                     dtype=np.float64)
             charge_sum(self.atoms_charge, self.atoms_volume, self.voxel_volume,
                     self.density, self.atoms_volumes)
             if self.spin_bool:
-                self.atoms_spin = np.zeros(self.atoms.shape[0] + 1,
+                self.atoms_spin = np.zeros(self.atoms.shape[0],
                         dtype=np.float64)
-                self.atoms_volume = np.zeros(self.atoms.shape[0] + 1,
+                self.atoms_volume = np.zeros(self.atoms.shape[0],
                         dtype=np.float64)
                 charge_sum(self.atoms_spin, self.atoms_volume,
                         self.voxel_volume, self.spin, self.atoms_volumes)
@@ -476,89 +549,34 @@ class Bader:
             formatted string
         """
         if volume_flag:
-            charge = self.bader_charge
-            volume = self.bader_volume
-            if self.spin_bool:
-                spin = self.bader_spin
-            atoms = self.bader_maxima
-            dist = self.bader_distance
+            df = self.dataframe[self.atoms.shape[0]:]
+            df = df[df['Charge'] > self.bader_volume_tol]
         else:
-            charge = self.atoms_charge
-            volume = self.atoms_volume
-            if self.spin_bool:
-                spin = self.atoms_spin
-            atoms = self.atoms_fractional
-            dist = self.atoms_surface_distance
-        m = charge[:-1] != 0
-        charge_width = np.max(np.log10(np.abs(charge[:-1][m])) + 1)
-        charge_width = max([int(charge_width), 1]) + 9
-        m = volume[:-1] != 0
-        volume_width = np.max(np.log10(volume[:-1][m]) + 1)
-        volume_width = max([int(volume_width), 1]) + 8
-        if self.spin_bool:
-            m = spin[:-1] != 0
-            spin_width = np.max(np.log10(np.abs(spin[:-1][m])) + 1)
-            spin_width = max([int(spin_width), 1]) + 9
-        atom_width = (np.log10(atoms.shape[0]) + 1).astype(int)
-        atom_width = max([atom_width, 1]) + 1
-        m = dist != 0
-        dist_width = np.max(np.log10(dist[m]) + 1)
-        dist_width = max([int(dist_width), 1]) + 8
-        h = ['#', ' a', ' b', ' c', 'Charge', 'Spin', 'Volume', 'Dist']
-        if not atom_width % 2:
-            h[0] = ' #'
-        if not charge_width % 2:
-            h[4] = ' Charge'
-        if self.spin_bool and not spin_width % 2:
-            h[5] = ' Spin'
-        if volume_width % 2:
-            h[6] = ' Volume'
-        if dist_width % 2:
-            h[7] = ' Dist'
-        header_format = f"{{:^{atom_width}s}}" + "{:^8s}" * 3
-        if self.spin_bool:
-            header_format += f"{{:^{charge_width}s}}{{:^{spin_width}s}}"
-        else:
-            header_format += f"{{:^{charge_width}s}}"
-            h.pop(5)
-        header_format += f"{{:^{volume_width}}}"
-        header_format += f"{{:^{dist_width}s}}\n"
-
-        header = header_format.format(*h)
-        line = '-' * len(header) + '\n'
-        table = ''
-        for i, atom in enumerate(atoms):
-            if volume_flag and np.abs(charge[i]) < self.bader_volume_tol:
-                continue
-            a, b, c = atom
-            table += f"{i:>{atom_width}}{a:> 8.4f}{b:> 8.4f}{c:> 8.4f}"
-            table += f"{charge[i]:> {charge_width}.6f}"
-            if self.spin_bool:
-                table += f"{spin[i]:> {spin_width}.6f}"
-            table += f"{volume[i]:>{volume_width}.6f}"
-            table += f"{dist[i]:>{dist_width}.6f}"
-            table += '\n'
+            df = self.dataframe[:self.atoms.shape[0]]
+        df_text = df.to_string(float_format='{:.6f}'.format, justify='center')
+        df_text = df_text.split('\n')
+        for i, line in enumerate(df_text):
+            df_text[i] = ' ' + line + '\n'
+        df_text.insert(1, '-' * len(df_text[0]) + '\n')
+        df_text.append('-' * len(df_text[0]) + '\n')
+        df_text = ''.join(df_text)
         footer = ''
-        tot_charge = np.sum(charge)
+        tot_charge = df['Charge'].sum()
+        print(tot_charge)
         elec_width = np.log10(np.abs(tot_charge)) + 8
         footer_width = int(elec_width)
         if self.vacuum_tol is not None:
-            vac_items = [charge[-1], volume[-1]]
-            if self.spin_bool:
-                vac_items.append(spin[-1] * 100)
+            vac_items = [self.vacuum_charge, self.vacuum_volume]
             vac_width = np.max(np.log10(np.abs(vac_items))).astype(int) + 8
             if vac_width > footer_width:
                 footer_width = vac_width
             footer = f" Vacuum Charge:"
-            footer += f"{charge[-1]:>{footer_width + 6}.4f}\n"
-            if self.spin_bool:
-                footer += f" Vacuum Spin:"
-                footer += f"{spin[-1]:>{footer_width + 8}.4f}\n"
+            footer += f"{self.vacuum_charge:>{footer_width + 6}.4f}\n"
             footer += f" Vacuum Volume:"
-            footer += f"{volume[-1]:>{footer_width + 6}.4f}\n"
+            footer += f"{self.vacuum_volume:>{footer_width + 6}.4f}\n"
         footer += f" Number of Electrons:"
-        footer += f"{np.sum(tot_charge):>{footer_width}.4f}"
-        return header + line + table + line + footer
+        footer += f"{tot_charge:>{footer_width}.4f}"
+        return df_text + footer
 
     def apply_config(self, d):
         """Apply a config dictionary to the class.

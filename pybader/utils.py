@@ -247,8 +247,9 @@ def charge_sum(charge, volume, voxel_volume, density, volumes):
     """
     for i in np.ndindex(volumes.shape):
         atom_num = volumes[i]
-        charge[atom_num] += density[i]
-        volume[atom_num] += voxel_volume
+        if 0 <= atom_num:
+            charge[atom_num] += density[i]
+            volume[atom_num] += voxel_volume
     for j in range(charge.shape[0]):
         charge[j] *= voxel_volume
 
@@ -379,18 +380,25 @@ def surface_dist(idx, shape, known, volumes, lattice, atoms, i_c):
 
 
 @njit(cache=True)
-def vacuum_assign(density, volumes, vac_tol):
+def vacuum_assign(reference, volumes, vac_tol, density, voxel_volume):
     """Create a voxel to vol_num map with masked values below a threshold.
 
     args:
         density: the density to be used as a reference
         volumes: an empty array to be filled
         vac_tol: tolerance of what to consider vacuum
+        density: the charge or spin density
+        voxel_volume: the volume associated with each voxel
     """
+    charge = 0
+    volume = 0
     for i in np.ndindex(volumes.shape):
-        if density[i] <= vac_tol:
+        if reference[i] <= vac_tol:
             volumes[i] = -1
-    return volumes
+            charge += density[i]
+            volume += voxel_volume
+    charge *= voxel_volume
+    return volumes, charge, volume
 
 
 @njit(cache=True, nogil=True)
