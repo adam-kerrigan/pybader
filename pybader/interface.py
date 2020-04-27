@@ -380,10 +380,10 @@ class Bader:
                         pd.Series(self.bader_maxima_fractional[:, 0], name='a'),
                         )
                 b = b.append(
-                        pd.Series(self.bader_maxima_fractional[:, 0], name='b'),
+                        pd.Series(self.bader_maxima_fractional[:, 1], name='b'),
                         )
                 c = c.append(
-                        pd.Series(self.bader_maxima_fractional[:, 0], name='c'),
+                        pd.Series(self.bader_maxima_fractional[:, 2], name='c'),
                         )
                 charge = charge.append(
                         pd.Series(self.bader_charge, name='Charge'),
