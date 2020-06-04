@@ -1,17 +1,15 @@
 """Misc utility functions.
 """
-import numpy as np
-from numba import (
-        njit,
-        types,
-)
-from numba.typed import Dict
-from time import sleep
-from tqdm import tqdm
-from shutil import get_terminal_size
-from io import StringIO
-from contextlib import contextmanager
 import sys
+from contextlib import contextmanager
+from io import StringIO
+from shutil import get_terminal_size
+from time import sleep
+
+import numpy as np
+from numba import njit, types
+from numba.typed import Dict
+from tqdm import tqdm
 
 
 def dtype_calc(max_val):
@@ -135,11 +133,11 @@ def tqdm_wrap(*args, **kwargs):
     else:
         ncols = 80
     kwargs_update = {
-            **kwargs,
-            'ascii': True,
-            'ncols': ncols,
-            'bar_format': bar_format,
-            'file': sys.stdout,
+        **kwargs,
+        'ascii': True,
+        'ncols': ncols,
+        'bar_format': bar_format,
+        'file': sys.stdout,
     }
     return tqdm(*args, **kwargs_update)
 
@@ -206,8 +204,8 @@ def atom_assign(bader_max, atoms, lattice, i_c):
         i_c[0] += 1
         b_max = bader_max[i]
         min_distance = ((b_max[0] - (atoms[0][0] + pbc[0]))**2
-                      + (b_max[1] - (atoms[0][1] + pbc[1]))**2
-                      + (b_max[2] - (atoms[0][2] + pbc[2]))**2)
+                        + (b_max[1] - (atoms[0][1] + pbc[1]))**2
+                        + (b_max[2] - (atoms[0][2] + pbc[2]))**2)
         atom_num = 0
         for j in range(atoms.shape[0]):
             for k in range(3):
@@ -224,8 +222,8 @@ def atom_assign(bader_max, atoms, lattice, i_c):
                         for k in range(3):
                             pbc[k] = pbc_l[0, k] + pbc_l[1, k] + pbc_l[2, k]
                         dist = ((b_max[0] - (atom[0] + pbc[0]))**2
-                              + (b_max[1] - (atom[1] + pbc[1]))**2
-                              + (b_max[2] - (atom[2] + pbc[2]))**2)
+                                + (b_max[1] - (atom[1] + pbc[1]))**2
+                                + (b_max[2] - (atom[2] + pbc[2]))**2)
                         if dist < min_distance:
                             min_distance = dist
                             atom_num = j
@@ -341,7 +339,8 @@ def surface_dist(idx, shape, known, volumes, lattice, atoms, i_c):
     p = np.zeros(3, dtype=np.int64)
     pc = np.zeros(3, dtype=np.float64)
     for j in range(atoms.shape[0]):
-        max_distance[j] = known.shape[0]**2 + known.shape[1]**2 + known.shape[2]**2
+        max_distance[j] = known.shape[0]**2 + \
+            known.shape[1]**2 + known.shape[2]**2
     for nx in range(idx[0], idx[0] + shape[0]):
         p[0] = nx
         for ny in range(idx[1], idx[1] + shape[1]):
@@ -368,10 +367,11 @@ def surface_dist(idx, shape, known, volumes, lattice, atoms, i_c):
                             for j in range(3):
                                 pbc_l[2, j] = lattice[2, j] * z
                             for j in range(3):
-                                pbc[j] = pbc_l[0, j] + pbc_l[1, j] + pbc_l[2, j]
+                                pbc[j] = pbc_l[0, j] + \
+                                    pbc_l[1, j] + pbc_l[2, j]
                             dist = ((pc[0] - (atom[0] + pbc[0]))**2
-                                  + (pc[1] - (atom[1] + pbc[1]))**2
-                                  + (pc[2] - (atom[2] + pbc[2]))**2)
+                                    + (pc[1] - (atom[1] + pbc[1]))**2
+                                    + (pc[2] - (atom[2] + pbc[2]))**2)
                             if dist < min_distance:
                                 min_distance = dist
                 distance[vol_num] = min_distance**.5

@@ -6,10 +6,8 @@ by bader_calc in the thread_handlers module.
 """
 import numpy as np
 from numba import njit
-from .utils import (
-        array_assign,
-        volume_extend,
-)
+
+from .utils import array_assign, volume_extend
 
 __contains__ = ['ongrid', 'neargrid']
 
@@ -180,7 +178,8 @@ def ongrid(density, volumes, idx, dist_mat, T_grad, i_c):
             # no break condition so add point to path
             else:
                 if path_num >= path.shape[0]:
-                    path = array_assign(path, path.shape[0], path.shape[0] + vx)
+                    path = array_assign(
+                        path, path.shape[0], path.shape[0] + vx)
                 for j in range(3):
                     p[j] = pd[j]
                     path[path_num][j] = pv[j]
@@ -192,7 +191,7 @@ def ongrid(density, volumes, idx, dist_mat, T_grad, i_c):
         if vol_num == -2:
             if edge_num >= edge_max.shape[0]:
                 edge_max = array_assign(edge_max, edge_max.shape[0],
-                        edge_max.shape[0] + vx)
+                                        edge_max.shape[0] + vx)
             # add max to bader_max list add one to len counter
             for j in range(3):
                 edge_max[edge_num][j] = pd[j]
@@ -202,7 +201,7 @@ def ongrid(density, volumes, idx, dist_mat, T_grad, i_c):
         elif vol_num == 0:
             if bader_num >= bader_max.shape[0]:
                 bader_max = array_assign(bader_max, bader_max.shape[0],
-                        bader_max.shape[0] + vx)
+                                         bader_max.shape[0] + vx)
             # add max to bader_max list add one to len counter
             for j in range(3):
                 bader_max[bader_num][j] = pd[j]
@@ -332,8 +331,8 @@ def neargrid(density, volumes, idx, dist_mat, T_grad, i_c):
             max_grad = 0.
             for j in range(3):
                 grad_dir[j] = ((T_grad[j, 0] * grad[0])
-                             + (T_grad[j, 1] * grad[1])
-                             + (T_grad[j, 2] * grad[2]))
+                               + (T_grad[j, 1] * grad[1])
+                               + (T_grad[j, 2] * grad[2]))
                 if grad_dir[j] > max_grad:
                     max_grad = grad_dir[j]
                 elif -grad_dir[j] > max_grad:
@@ -513,7 +512,8 @@ def neargrid(density, volumes, idx, dist_mat, T_grad, i_c):
             # no break condition so add point to path
             else:
                 if path_num >= path.shape[0]:
-                    path = array_assign(path, path.shape[0], path.shape[0] + vx)
+                    path = array_assign(
+                        path, path.shape[0], path.shape[0] + vx)
                 for j in range(3):
                     p[j] = pd[j]
                     path[path_num][j] = pv[j]
@@ -523,7 +523,7 @@ def neargrid(density, volumes, idx, dist_mat, T_grad, i_c):
         if vol_num == -2:
             if edge_num >= edge_max.shape[0]:
                 edge_max = array_assign(edge_max, edge_max.shape[0],
-                        edge_max.shape[0] + vx)
+                                        edge_max.shape[0] + vx)
             # add max to bader_max list add one to len counter
             for j in range(3):
                 edge_max[edge_num][j] = pd[j]
@@ -533,7 +533,7 @@ def neargrid(density, volumes, idx, dist_mat, T_grad, i_c):
         elif vol_num == 0:
             if bader_num >= bader_max.shape[0]:
                 bader_max = array_assign(bader_max, bader_max.shape[0],
-                        bader_max.shape[0] + vx)
+                                         bader_max.shape[0] + vx)
             # add max to bader_max list add one to len counter
             for j in range(3):
                 bader_max[bader_num][j] = pd[j]

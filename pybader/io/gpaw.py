@@ -4,8 +4,10 @@ This module requires GPAW (https://wiki.fysik.dtu.dk/gpaw/) to run the read
 function but is importable without it for use with ase. However it will not
 show as an available filetype unless installed.
 """
-from .cube import write
 import numpy as np
+
+from .cube import write
+
 try:
     from gpaw import restart
     GPAW_AVAIL = True
@@ -31,25 +33,25 @@ def read_obj(calc, gridref=4, spin_flag=False, fn='', prefix=''):
         spin_0 = calc.get_all_electron_density(spin=0, gridrefinement=gridref)
         spin_1 = calc.get_all_electron_density(spin=1, gridrefinement=gridref)
         density_dict = {
-                'charge': spin0 + spin1,
-                'spin': spin0 - spin1,
+            'charge': spin_0 + spin_1,
+            'spin': spin_0 - spin_1,
         }
     else:
         density_dict = {
-                'charge': calc.get_all_electron_density(gridrefinement=gridref)
+            'charge': calc.get_all_electron_density(gridrefinement=gridref)
         }
     lattice = np.zeros((3, 3), dtype=np.float64, order='C')
     lattice[:] = atoms_obj.cell[:]
     atoms = np.zeros(atoms_obj.positions.shape, dtype=np.float64, order='C')
-    atoms[:] =  atoms_obj.get_scaled_positions()
+    atoms[:] = atoms_obj.get_scaled_positions()
     atoms = np.dot(atoms, lattice)
     file_info = {
-            'filename': fn,
-            'prefix': prefix,
-            'file_type': 'gpaw',
-            'write_function': write,
-            'elements': atoms_obj.get_atomic_numbers(),
-            'voxel_offset': np.zeros(3),  # I am unsure on this
+        'filename': fn,
+        'prefix': prefix,
+        'file_type': 'gpaw',
+        'write_function': write,
+        'elements': atoms_obj.get_atomic_numbers(),
+        'voxel_offset': np.zeros(3),  # I am unsure on this
     }
     return density_dict, lattice, atoms, file_info
 

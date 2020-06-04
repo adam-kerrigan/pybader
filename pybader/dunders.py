@@ -5,11 +5,11 @@ required to build this package. It contains metadata executed by the setup.py
 script and imported by the pybader.__init__ it is not meant to be used by
 anything or anyone else.
 """
-from sys import platform
 import os
+from sys import platform
 
 __name__ = "pybader"
-__version__ = "0.3.5"
+__version__ = "0.3.6"
 __author__ = "Adam Kerrigan"
 __email__ = "ak1014@york.ac.uk"
 __url__ = "https://github.com/kerrigoon/pybader"
@@ -20,5 +20,7 @@ without lattice bias, J. Phys.: Condens. Matter 21, 084204 (2009). Methods have
 been updated to allow threading over multiple threads.
 """
 __config__ = (os.path.join(os.getenv('LOCALAPPDATA'), 'pybader', 'config.ini')
-        if platform == 'win32' else
-        os.path.expanduser(os.path.join('~', '.config', 'bader', 'config.ini')))
+              if platform == 'win32' else
+              os.path.expanduser(os.path.join(
+                  '~', '.config', 'bader', 'config.ini'
+              )))

@@ -1,17 +1,12 @@
 """Module for handling VASP style density files.
 """
-import numpy as np
 import os
+from concurrent.futures import ThreadPoolExecutor, as_completed
 from time import time
-from ..utils import (
-        tqdm_wrap,
-        fortran_format,
-        python_format,
-)
-from concurrent.futures import (
-    ThreadPoolExecutor,
-    as_completed,
-)
+
+import numpy as np
+
+from ..utils import fortran_format, python_format, tqdm_wrap
 
 __extensions__ = ['chgcar', '.vasp']
 __args__ = ['charge_flag', 'spin_flag', 'buffer_size']
@@ -82,9 +77,9 @@ def read(fn, charge_flag=True, spin_flag=False, buffer_size=64):
         if grid_lines > buffer_size:
             buffer_num = (grid_lines // buffer_size) + 1
             buffer_range = [buffer_size
-                    if i < buffer_num - 1
-                    else (grid_lines - (i * buffer_size))
-                    for i in range(buffer_num)]
+                            if i < buffer_num - 1
+                            else (grid_lines - (i * buffer_size))
+                            for i in range(buffer_num)]
         else:
             # buffer larger than the amount of lines in density.
             buffer_size = grid_lines
@@ -149,15 +144,15 @@ def read(fn, charge_flag=True, spin_flag=False, buffer_size=64):
         density[key] /= lattice_vol
     print(f"Time taken: {time() - t0:0.3f}s", end='\n\n')
     file_info = {
-            'filename': filename,
-            'prefix': prefix,
-            'file_type': 'VASP',
-            'buffer_size': buffer_size,
-            'write_function': write,
-            'element_nums': atom_nums,
-            'charge_flag': charge_flag,
-            'spin_flag': spin_flag,
-            'voxel_offset': np.zeros(3)
+        'filename': filename,
+        'prefix': prefix,
+        'file_type': 'VASP',
+        'buffer_size': buffer_size,
+        'write_function': write,
+        'element_nums': atom_nums,
+        'charge_flag': charge_flag,
+        'spin_flag': spin_flag,
+        'voxel_offset': np.zeros(3)
     }
     if atom_types is not None:
         file_info['elements'] = atom_types

@@ -1,13 +1,11 @@
 """Module for handling Gaussian/CP2K style density files.
 """
-import numpy as np
 import os
 from time import time
-from ..utils import (
-        tqdm_wrap,
-        fortran_format,
-        python_format,
-)
+
+import numpy as np
+
+from ..utils import fortran_format, python_format, tqdm_wrap
 
 __extensions__ = ['.cube']
 __args__ = ['orbitals']
@@ -121,7 +119,7 @@ def read(fn, orbitals=0):
             charge = charge.reshape(nx, ny, nz, nval)
             charge = np.swapaxes(charge, 0, -1)
             density['charge'] = np.sum([charge[dset_ids.index(int(m))]
-                    for m in orbitals], axis=0)
+                                        for m in orbitals], axis=0)
         elif orbitals < 0:
             # return the entire file
             charge = charge.reshape(nx, ny, nz, nval)
@@ -148,12 +146,12 @@ def read(fn, orbitals=0):
     atoms *= bohr_to_ang
     density['charge'] *= ang_to_bohr**3
     file_info = {
-            'filename': fn,
-            'prefix': prefix,
-            'file_type': 'cube',
-            'write_function': write,
-            'elements': atom_types,
-            'voxel_offset': np.array([.5, .5, .5])
+        'filename': fn,
+        'prefix': prefix,
+        'file_type': 'cube',
+        'write_function': write,
+        'elements': atom_types,
+        'voxel_offset': np.array([.5, .5, .5])
     }
     return density, lattice, atoms, file_info
 
@@ -219,5 +217,6 @@ def write(fn, atoms, lattice, density, file_info, prefix=None, suffix='.cube'):
                 r = charge[i, j][:buffer_size * 6].reshape((buffer_size, 6))
                 out = output_format(r, 5)
                 if buffer_flag:
-                    out += output_format(np.array([charge[i, j][-buffer_rem:]]), 5)
+                    out += output_format(np.array([charge[i, j]
+                                                   [-buffer_rem:]]), 5)
                 f.write(out)

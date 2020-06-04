@@ -1,27 +1,15 @@
 """Functions for handling the threading of intensive calculations.
 """
+from concurrent.futures import ThreadPoolExecutor, as_completed
+
 import numpy as np
 from numba import typeof
-from concurrent.futures import (
-    ThreadPoolExecutor,
-    as_completed,
-)
-from pybader import refinement
-from pybader import methods
-from .utils import (
-    array_merge,
-    atom_assign,
-    dtype_calc,
-    dtype_change,
-    edge_assign,
-    factor_3d,
-    progress_bar_update,
-    surface_dist,
-    tqdm_wrap,
-    volume_assign,
-    volume_merge,
-    volume_offset,
-)
+
+from pybader import methods, refinement
+
+from .utils import (array_merge, atom_assign, dtype_calc, dtype_change,
+                    edge_assign, factor_3d, progress_bar_update, surface_dist,
+                    tqdm_wrap, volume_assign, volume_merge, volume_offset)
 
 
 def bader_calc(method, density, volumes, dist_mat, T_grad, threads):
@@ -80,8 +68,10 @@ def bader_calc(method, density, volumes, dist_mat, T_grad, threads):
         if edge_max.shape[0] > 0:
             edge_assign(edge_max, volumes)
     if volumes.dtype != dtype_calc(-bader_max.shape[0]):
-        volumes = dtype_change(volumes,
-                np.zeros(volumes.shape, dtype=dtype_calc(-bader_max.shape[0])))
+        volumes = dtype_change(
+            volumes,
+            np.zeros(volumes.shape, dtype=dtype_calc(-bader_max.shape[0]))
+        )
     return bader_max, volumes
 
 
@@ -128,8 +118,10 @@ def assign_to_atoms(bader_max, atoms, lattice, volumes, threads):
         while i_c[0] < pbar_tot:
             i_c[0] += 1
     if atom_volumes.dtype != dtype_calc(-atoms.shape[0]):
-        atom_volumes = dtype_change(atom_volumes,
-                np.zeros(atom_volumes.shape, dtype=dtype_calc(-atoms.shape[0])))
+        atom_volumes = dtype_change(
+            atom_volumes,
+            np.zeros(atom_volumes.shape, dtype=dtype_calc(-atoms.shape[0]))
+        )
     return bader_atoms, bader_distance, atom_volumes
 
 
@@ -188,7 +180,7 @@ def refine(method, refine_mode, density, volumes, dist_mat, T_grad, threads):
     with ThreadPoolExecutor(max_workers=threads+1) as e:
         f = {
             e.submit(refine, knowns[i], rknown, density, volumes, idx[i],
-                    dist_mat, T_grad, i_c): i for i in range(thread)
+                     dist_mat, T_grad, i_c): i for i in range(thread)
         }
         bar_thread = e.submit(progress_bar_update, pbar, i_c)
         for future in as_completed(f):
@@ -227,7 +219,8 @@ def refine(method, refine_mode, density, volumes, dist_mat, T_grad, threads):
         with ThreadPoolExecutor(max_workers=threads+1) as e:
             f = {
                 e.submit(refine, knowns[i], rknown, density, volumes,
-                        idx[i], dist_mat, T_grad, i_c): i for i in range(thread)
+                         idx[i], dist_mat, T_grad, i_c): i
+                for i in range(thread)
             }
             bar_thread = e.submit(progress_bar_update, pbar, i_c)
             for future in as_completed(f):
@@ -285,7 +278,7 @@ def surface_distance(density, volumes, lattice, atoms, threads):
     with ThreadPoolExecutor(max_workers=threads+1) as e:
         f = {
             e.submit(surface_dist, idx[i], shape[i], known, volumes, lattice,
-                    atoms, i_c): i for i in range(thread)
+                     atoms, i_c): i for i in range(thread)
         }
         bar_thread = e.submit(progress_bar_update, pbar, i_c)
         for future in as_completed(f):

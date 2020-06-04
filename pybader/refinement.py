@@ -7,10 +7,8 @@ by refine in the thread_handlers module.
 """
 import numpy as np
 from numba import njit
-from .utils import (
-        array_assign,
-        volume_extend,
-)
+
+from .utils import array_assign, volume_extend
 
 __contains__ = ['neargrid']
 
@@ -124,8 +122,8 @@ def neargrid(known, rknown, density, volumes, idx, dist_mat, T_grad, i_c):
             max_grad = 0.
             for j in range(3):
                 grad_dir[j] = ((T_grad[j][0] * grad[0])
-                             + (T_grad[j][1] * grad[1])
-                             + (T_grad[j][2] * grad[2]))
+                               + (T_grad[j][1] * grad[1])
+                               + (T_grad[j][2] * grad[2]))
                 if grad_dir[j] > max_grad:
                     max_grad = grad_dir[j]
                 elif -grad_dir[j] > max_grad:
@@ -278,7 +276,7 @@ def neargrid(known, rknown, density, volumes, idx, dist_mat, T_grad, i_c):
                     for j in range(3):
                         if known.shape[j] == density.shape[j]:
                             positive_len[j] = density.shape[j]
-                            negative_len[j] = 0 # 1 - density.shape[j]
+                            negative_len[j] = 0  # 1 - density.shape[j]
                         else:
                             positive_len[j] = new_positive_len[j]
                             negative_len[j] = new_negative_len[j]
@@ -306,7 +304,8 @@ def neargrid(known, rknown, density, volumes, idx, dist_mat, T_grad, i_c):
             # no break condition so add point to path
             else:
                 if path_num >= path.shape[0]:
-                    path = array_assign(path, path.shape[0], path.shape[0] + kx)
+                    path = array_assign(
+                        path, path.shape[0], path.shape[0] + kx)
                 for j in range(3):
                     p[j] = pd[j]
                     path[path_num][j] = pk[j]

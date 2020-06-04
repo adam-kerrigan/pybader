@@ -1,13 +1,9 @@
 import os
+
 from pkg_resources import iter_entry_points, resource_listdir
-from pybader.dunders import (
-        __name__,
-        __version__,
-        __author__,
-        __desc__,
-        __long_desc__,
-        __config__,
-)
+
+from pybader.dunders import (__author__, __config__, __desc__, __long_desc__,
+                             __name__, __version__)
 
 __doc__ = __desc__ + '\n\n' + __long_desc__
 del(__desc__, __long_desc__)

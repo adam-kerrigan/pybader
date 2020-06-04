@@ -3,81 +3,66 @@
 Contains the Bader class, dictionaries containing the attributes of the Bader
 class along with their types and a config file converter.
 """
-import numpy as np
-import pandas as pd
-from pickle import dump
 from ast import literal_eval
 from configparser import ConfigParser
-from pybader import (
-        io,
-        __config__,
-)
-from pybader.utils import (
-        vacuum_assign,
-        atom_assign,
-        charge_sum,
-        volume_mask,
-)
-from pybader.thread_handlers import (
-        bader_calc,
-        assign_to_atoms,
-        refine,
-        surface_distance,
-        dtype_calc,
-)
-from inspect import (
-        getmembers,
-        ismodule,
-)
+from inspect import getmembers, ismodule
+from pickle import dump
+from warnings import catch_warnings, simplefilter
 
+import numpy as np
+import pandas as pd
+
+from pybader import __config__, io
+from pybader.thread_handlers import (assign_to_atoms, bader_calc, dtype_calc,
+                                     refine, surface_distance)
+from pybader.utils import atom_assign, charge_sum, vacuum_assign, volume_mask
 
 # Dictionary containing the private attributes and types of the Bader class
 private_attributes = {
-        '_density': np.ndarray,
-        '_lattice': np.ndarray,
-        '_atoms': np.ndarray,
-        '_file_info': dict,
-        '_bader_maxima': np.ndarray,
-        '_vacuum_charge': float,
-        '_vacuum_volume': float,
-        '_dataframe': pd.DataFrame
+    '_density': np.ndarray,
+    '_lattice': np.ndarray,
+    '_atoms': np.ndarray,
+    '_file_info': dict,
+    '_bader_maxima': np.ndarray,
+    '_vacuum_charge': float,
+    '_vacuum_volume': float,
+    '_dataframe': pd.DataFrame
 }
 
 
 # Dictionary containing the configurable attributes and types of the Bader class
 config_attributes = {
-        'method': str,
-        'refine_method': str,
-        'vacuum_tol': (type(None), float),
-        'refine_mode': (str, int),
-        'bader_volume_tol': (type(None), float),
-        'export_mode': (type(None), str, int),
-        'prefix': str,
-        'output': str,
-        'threads': int,
-        'fortran_format': int,
-        'speed_flag': bool,
-        'spin_flag': bool,
+    'method': str,
+    'refine_method': str,
+    'vacuum_tol': (type(None), float),
+    'refine_mode': (str, int),
+    'bader_volume_tol': (type(None), float),
+    'export_mode': (type(None), str, int),
+    'prefix': str,
+    'output': str,
+    'threads': int,
+    'fortran_format': int,
+    'speed_flag': bool,
+    'spin_flag': bool,
 }
 
 
 # Dictionary containing the accessible attributes and types of the Bader class
 properties = {
-        'density': property,
-        'reference': property,
-        'bader_charge': np.ndarray,
-        'bader_volume': np.ndarray,
-        'bader_spin': np.ndarray,
-        'bader_volumes': np.ndarray,
-        'bader_atoms': np.ndarray,
-        'bader_distance': np.ndarray,
-        'atoms_charge': np.ndarray,
-        'atoms_volume': np.ndarray,
-        'atoms_spin': np.ndarray,
-        'atoms_volumes': np.ndarray,
-        'atoms_surface_distance': np.ndarray,
+    'density': property,
+    'reference': property,
+    'bader_charge': np.ndarray,
+    'bader_volume': np.ndarray,
+    'bader_spin': np.ndarray,
+    'bader_volumes': np.ndarray,
+    'bader_atoms': np.ndarray,
+    'bader_distance': np.ndarray,
+    'atoms_charge': np.ndarray,
+    'atoms_volume': np.ndarray,
+    'atoms_spin': np.ndarray,
+    'atoms_volumes': np.ndarray,
+    'atoms_surface_distance': np.ndarray,
 }
-
 
 
 def python_config(config_file=__config__, key='DEFAULT'):
@@ -135,9 +120,9 @@ class Bader:
         other keyword arguements accepted are listed in the __slots__ attribute
     """
     __slots__ = [
-            *private_attributes.keys(),
-            *config_attributes.keys(),
-            *properties.keys(),
+        *private_attributes.keys(),
+        *config_attributes.keys(),
+        *properties.keys(),
     ]
 
     def __init__(self, density_dict, lattice, atoms, file_info, **kwargs):
@@ -173,14 +158,14 @@ class Bader:
             return cls(*io_.read(filename, **file_conf), **kwargs)
         else:
             io_packages = (p for p in getmembers(io, ismodule)
-                    if p[1].__extensions__ is not None)
+                           if p[1].__extensions__ is not None)
             for package in io_packages:
                 for ext in package[1].__extensions__:
                     io_ = package[1] if ext in filename.lower() else None
                     if io_ is not None:
                         file_conf = {
-                                k: v for k, v in kwargs.items()
-                                if k in io_.__args__
+                            k: v for k, v in kwargs.items()
+                            if k in io_.__args__
                         }
                         return cls(*io_.read(filename, **file_conf), **kwargs)
         print("  No clear file type found; file will be read as chgcar.")
@@ -377,34 +362,34 @@ class Bader:
                 spin = pd.Series(self.atoms_spin, name='Spin')
             if not self.speed_flag:
                 a = a.append(
-                        pd.Series(self.bader_maxima_fractional[:, 0], name='a'),
-                        )
+                    pd.Series(self.bader_maxima_fractional[:, 0], name='a'),
+                )
                 b = b.append(
-                        pd.Series(self.bader_maxima_fractional[:, 1], name='b'),
-                        )
+                    pd.Series(self.bader_maxima_fractional[:, 1], name='b'),
+                )
                 c = c.append(
-                        pd.Series(self.bader_maxima_fractional[:, 2], name='c'),
-                        )
+                    pd.Series(self.bader_maxima_fractional[:, 2], name='c'),
+                )
                 charge = charge.append(
-                        pd.Series(self.bader_charge, name='Charge'),
-                        )
+                    pd.Series(self.bader_charge, name='Charge'),
+                )
                 volume = volume.append(
-                        pd.Series(self.bader_volume, name='Volume'),
-                        )
+                    pd.Series(self.bader_volume, name='Volume'),
+                )
                 distance = distance.append(
-                        pd.Series(self.bader_distance, name='Distance'),
-                        )
+                    pd.Series(self.bader_distance, name='Distance'),
+                )
                 if self.spin_bool:
                     spin = spin.append(
-                            pd.Series(self.bader_spin, name='Spin'),
-                            )
+                        pd.Series(self.bader_spin, name='Spin'),
+                    )
             if self.spin_bool:
                 self.dataframe = pd.concat(
-                        [a, b, c, charge, spin, volume, distance],
-                        axis=1)
+                    [a, b, c, charge, spin, volume, distance],
+                    axis=1)
             else:
                 self.dataframe = pd.concat([a, b, c, charge, volume, distance],
-                        axis=1)
+                                           axis=1)
         return self._dataframe
 
     @dataframe.setter
@@ -469,34 +454,36 @@ class Bader:
         try:
             vacuum_tol = np.float64(self.vacuum_tol)
             volumes, vacuum_charge, vacuum_volume = vacuum_assign(
-                    self.reference, volumes, vacuum_tol, self.density,
-                    self.voxel_volume)
+                self.reference, volumes, vacuum_tol, self.density,
+                self.voxel_volume)
             self.vacuum_charge = vacuum_charge
             self.vacuum_volume = vacuum_volume
         except (ValueError, TypeError) as e:
             print(f"  VACUUM_TOL ERROR: {self.vacuum_tol} is not float")
+            print(f"  {e}")
         finally:
             self.bader_volumes = volumes
 
     def bader_calc(self):
         """Launch the thread handler for the Bader calculation.
         """
-        self.bader_maxima, self.bader_volumes = bader_calc(self.method,
-                self.reference, self.bader_volumes, self.distance_matrix,
-                self.T_grad, self.threads)
+        self.bader_maxima, self.bader_volumes = bader_calc(
+            self.method, self.reference, self.bader_volumes,
+            self.distance_matrix, self.T_grad, self.threads
+        )
 
     def bader_to_atom_distance(self):
         """Launch the thread handler for assigning Bader volumes to atoms.
         """
         ret = assign_to_atoms(self.bader_maxima, self.atoms, self.lattice,
-                self.bader_volumes, self.threads)
+                              self.bader_volumes, self.threads)
         self.bader_atoms, self.bader_distance, self.atoms_volumes = ret
 
     def refine_volumes(self, volumes):
         """Launch the thread handler for refining Bader and/or atom volumes.
         """
         refine(self.refine_method, self.refine_mode, self.reference, volumes,
-                self.distance_matrix, self.T_grad, self.threads)
+               self.distance_matrix, self.T_grad, self.threads)
 
     def sum_volumes(self, bader=False):
         """Sum the density and volume in the Bader volumes/atoms.
@@ -506,39 +493,41 @@ class Bader:
         """
         if bader:
             self.bader_charge = np.zeros(self.bader_maxima.shape[0],
-                    dtype=np.float64)
+                                         dtype=np.float64)
             self.bader_volume = np.zeros(self.bader_maxima.shape[0],
-                    dtype=np.float64)
+                                         dtype=np.float64)
             charge_sum(self.bader_charge, self.bader_volume, self.voxel_volume,
-                    self.density, self.bader_volumes)
+                       self.density, self.bader_volumes)
             if self.spin_bool:
                 self.bader_spin = np.zeros(self.bader_maxima.shape[0],
-                        dtype=np.float64)
+                                           dtype=np.float64)
                 self.bader_volume = np.zeros(self.bader_maxima.shape[0],
-                        dtype=np.float64)
+                                             dtype=np.float64)
                 charge_sum(self.bader_spin, self.bader_volume,
-                        self.voxel_volume, self.spin, self.bader_volumes)
+                           self.voxel_volume, self.spin, self.bader_volumes)
         else:
             self.atoms_charge = np.zeros(self.atoms.shape[0],
-                    dtype=np.float64)
+                                         dtype=np.float64)
             self.atoms_volume = np.zeros(self.atoms.shape[0],
-                    dtype=np.float64)
+                                         dtype=np.float64)
             charge_sum(self.atoms_charge, self.atoms_volume, self.voxel_volume,
-                    self.density, self.atoms_volumes)
+                       self.density, self.atoms_volumes)
             if self.spin_bool:
                 self.atoms_spin = np.zeros(self.atoms.shape[0],
-                        dtype=np.float64)
+                                           dtype=np.float64)
                 self.atoms_volume = np.zeros(self.atoms.shape[0],
-                        dtype=np.float64)
+                                             dtype=np.float64)
                 charge_sum(self.atoms_spin, self.atoms_volume,
-                        self.voxel_volume, self.spin, self.atoms_volumes)
+                           self.voxel_volume, self.spin, self.atoms_volumes)
 
     def min_surface_distance(self):
         """Launch the thread handler for calculating the min. surface distance.
         """
         atoms = self.atoms - self.voxel_offset
-        self.atoms_surface_distance = surface_distance(self.reference,
-                self.atoms_volumes, self.lattice, atoms, self.threads)
+        self.atoms_surface_distance = surface_distance(
+            self.reference, self.atoms_volumes, self.lattice,
+            atoms, self.threads
+        )
 
     def results(self, volume_flag=False):
         """Format the results from a calcution as a string.
@@ -562,7 +551,6 @@ class Bader:
         df_text = ''.join(df_text)
         footer = ''
         tot_charge = df['Charge'].sum()
-        print(tot_charge)
         elec_width = np.log10(np.abs(tot_charge)) + 8
         footer_width = int(elec_width)
         if self.vacuum_tol is not None:
@@ -623,9 +611,10 @@ class Bader:
             num = 'vacuum'
         self._file_info['comment'] = f"Bader {self.export_mode[0]}: {num}\n"
         self._file_info['fortran_format'] = self.fortran_format
-        self.info['write_function'](f"Bader-{self.export_mode[0]}-{num}",
-                self.atoms, self.lattice, density, self.info,
-                prefix=self.info['prefix'])
+        self.info['write_function'](
+            f"Bader-{self.export_mode[0]}-{num}", self.atoms, self.lattice,
+            density, self.info, prefix=self.info['prefix']
+        )
 
     def write_density(self):
         """Write the full density as stored in the density dict.
@@ -635,4 +624,4 @@ class Bader:
         self._file_info['comment'] = f"Full charge density output\n"
         self._file_info['fortran_format'] = self.fortran_format
         self.info['write_function'](f"{self.info['filename']}", self.atoms,
-                self.lattice, self._density, self.info, suffix='')
+                                    self.lattice, self._density, self.info, suffix='')

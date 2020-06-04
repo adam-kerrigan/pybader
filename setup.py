@@ -1,5 +1,6 @@
-from setuptools import setup
 import os
+
+from setuptools import setup
 
 CLASSIFIERS = """\
     Development Status :: 5 - Production/Stable

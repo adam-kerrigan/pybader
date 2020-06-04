@@ -5,39 +5,22 @@ well as the first run install. It is not designed to accessed as a module as
 most of the functions within require sys.argv to be set or often don't complete
 correctly if used out of turn.
 """
-import numpy as np
-import sys
 import os
-from pickle import (
-        load,
-        dump,
-)
+import sys
 from argparse import ArgumentParser
 from configparser import ConfigParser
+from inspect import getmembers, isfunction, ismodule
+from pickle import dump, load
 from time import time
-from pybader import (
-        __version__,
-        __doc__ as doc,
-        __config__,
-        io,
-        methods,
-        utils,
-        refinement,
-)
-from pybader.interface import (
-        Bader,
-        python_config,
-)
-from pybader.utils import (
-        nostdout,
-        tqdm_wrap,
-)
+
+import numpy as np
+
+from pybader import __config__
+from pybader import __doc__ as doc
+from pybader import __version__, io, methods, refinement, utils
+from pybader.interface import Bader, python_config
 from pybader.jits import jit_functs
-from inspect import (
-        getmembers,
-        ismodule,
-        isfunction,
-)
+from pybader.utils import nostdout, tqdm_wrap
 
 
 def bader():
@@ -87,21 +70,20 @@ def bader():
     the leading zero with a minus for negative numbers in output files, this
     adds an overhead to the write-out process but matches the output of some
     fortran programs"""
-    o="""How to save the information. Pickle (default) the entire class or just
+    o = """How to save the information. Pickle (default) the entire class or just
     print a text file containing the information about the Bader atoms and
     volumes"""
-    c=f"""Load a profile from the config file located at '{__config__}'
+    c = f"""Load a profile from the config file located at '{__config__}'
     """
 
     bchoice = methods.__contains__
     i_gen = (name for name, module in getmembers(io, ismodule)
-            if module.__extensions__ is not None)
+             if module.__extensions__ is not None)
     ichoice = [name for name in i_gen]
     rchoice = ['all', 'changed']
     ochoice = ['pickle', 'dat']
     cchoice = config.keys()
     export_check = ['all_atoms', 'all_volumes', 'sel_atoms', 'sel_volumes']
-
 
     # arguements of the program
     parser = ArgumentParser(description=description)
@@ -159,7 +141,7 @@ def bader():
             export_type = 'atoms'
         except ValueError:
             if len(args['export']) == 1:
-                export_list= [-2]
+                export_list = [-2]
                 if args['export'][0] in export_check:
                     export_type = args['export'][0][4:]
                 else:
@@ -182,7 +164,7 @@ def bader():
         config['spin_flag'] = not config['spin_flag']
     if args.get('speed'):
         config['speed_flag'] = not config['speed_flag']
-    if args.get('fortran_format')  is not None:
+    if args.get('fortran_format') is not None:
         config['fortran_format'] += args['fortran_format']
         config['fortran_format'] %= 3
     if args.get('prefix') is not None and args.get('prefix'):
@@ -237,7 +219,8 @@ def bader_read():
     export_check = ['all_atoms', 'all_volumes', 'sel_atoms', 'sel_volumes']
 
     parser = ArgumentParser(description=description)
-    parser.add_argument('filename', nargs='?', default='bader.p', help=filename)
+    parser.add_argument('filename', nargs='?',
+                        default='bader.p', help=filename)
     parser.add_argument('-a', '--atoms', action='store_true', help=a)
     parser.add_argument('-v', '--volume', action='store_true', help=v)
     parser.add_argument('-e', '--export', nargs='+', help=e)
@@ -303,6 +286,7 @@ def bader_read():
         with open(filename, '+wb') as f:
             dump(new_bader, f)
 
+
 def config_writer():
     old_config = None
     print(f"  Writing default config to '{__config__}': ", end='')
@@ -316,24 +300,24 @@ def config_writer():
 
     config = ConfigParser()
     config['DEFAULT'] = {
-            'method': 'neargrid',
-            'refine_method': 'neargrid',
-            'vacuum_tol': 'None',
-            'refine_mode': ('changed', 2),
-            'bader_volume_tol': 1E-3,
-            'export_mode': 'None',
-            'prefix': "''",
-            'output': 'pickle',
-            'threads': 1,
-            'fortran_format': 0,
-            'speed_flag': False,
-            'spin_flag': False,
+        'method': 'neargrid',
+        'refine_method': 'neargrid',
+        'vacuum_tol': 'None',
+        'refine_mode': ('changed', 2),
+        'bader_volume_tol': 1E-3,
+        'export_mode': 'None',
+        'prefix': "''",
+        'output': 'pickle',
+        'threads': 1,
+        'fortran_format': 0,
+        'speed_flag': False,
+        'spin_flag': False,
     }
     config['speed'] = {
-            'method': 'ongrid',
-            'refine_method': 'neargrid',
-            'refine_mode': ('changed', 3),
-            'speed_flag': True,
+        'method': 'ongrid',
+        'refine_method': 'neargrid',
+        'refine_mode': ('changed', 3),
+        'speed_flag': True,
     }
 
     if old_config is not None:
@@ -342,7 +326,7 @@ def config_writer():
                 config[key] = {}
             for keyword in old_config[key]:
                 config[key][keyword] = old_config[key].get(keyword)
-    with open(__config__,'w') as f:
+    with open(__config__, 'w') as f:
         config.write(f)
     print("Done.")
 
@@ -357,15 +341,15 @@ def JIT_caching():
     for _, val in jit_functs['utils'].items():
         tot += len(val)
     with tqdm_wrap(total=tot, desc=desc, file=sys.stderr) as pbar:
-            for key, val in jit_functs['utils'].items():
-                for args in val:
-                    getattr(utils, key)(*args)
-                    pbar.update(1)
-            for key, val in jit_functs['methods'].items():
-                for args in val:
-                    getattr(methods, key)(*args)
-                    pbar.update(1)
-            for key, val in jit_functs['refinement'].items():
-                for args in val:
-                    getattr(refinement, key)(*args)
-                    pbar.update(1)
+        for key, val in jit_functs['utils'].items():
+            for args in val:
+                getattr(utils, key)(*args)
+                pbar.update(1)
+        for key, val in jit_functs['methods'].items():
+            for args in val:
+                getattr(methods, key)(*args)
+                pbar.update(1)
+        for key, val in jit_functs['refinement'].items():
+            for args in val:
+                getattr(refinement, key)(*args)
+                pbar.update(1)
