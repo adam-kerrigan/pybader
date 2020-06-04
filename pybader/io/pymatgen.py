@@ -21,8 +21,11 @@ def read_obj(obj, spin_flag=False):
     density_dict['charge'] = obj.data.get('total', None)
     if spin_flag:
         density_dict['spin'] = obj.data.get('diff', None)
-    for key in density_dict:
-        density_dict[key] /= obj.structure.lattice.volume
+    for key, value in density_dict:
+        if value is None:
+            density_dict.pop(key)
+        else:
+            density_dict[key] /= obj.structure.lattice.volume
     lattice = np.zeros((3, 3))
     atoms = np.zeros((len(obj.structure._sites), 3))
     lattice[:] = obj.structure.lattice.matrix
