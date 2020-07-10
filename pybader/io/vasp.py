@@ -64,7 +64,8 @@ def read(fn, charge_flag=True, spin_flag=False, buffer_size=64):
             atoms = np.dot(atoms, np.linalg.inv(lattice))
             atoms %= 1
         _ = f.readline()
-        grid = np.array(f.readline().strip().split(), dtype=np.int64)
+        grid_str = f.readline()
+        grid = np.array(grid_str.strip().split(), dtype=np.int64)
         grid_pts = np.prod(grid)
         print(f"  {' x '.join(grid.astype(str))} grid size.")
         grid_lines = grid_pts // 5
@@ -85,7 +86,6 @@ def read(fn, charge_flag=True, spin_flag=False, buffer_size=64):
             buffer_size = grid_lines
             buffer_range = [buffer_size]
         if charge_flag:
-            t1 = time()
             charge = np.zeros(grid_pts, dtype=np.float64)
             idx = 0
             for buff in tqdm_wrap(buffer_range, desc="Charge density:"):
@@ -112,9 +112,9 @@ def read(fn, charge_flag=True, spin_flag=False, buffer_size=64):
             f.seek(spin_pos)
             _ = f.readline()
             while True:
-                line = f.readline().strip().split()
-                # int can't deal with standard form from a string, float can.
-                if all(int(float(x)) == y for x, y in zip(line, grid)):
+                # look for the grid defining line
+                line = f.readline()
+                if line == grid_str:
                     break
             # initialise spin density array and read in data.
             spin = np.zeros(grid_pts, dtype=np.float64)
