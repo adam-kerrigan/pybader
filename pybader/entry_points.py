@@ -258,7 +258,7 @@ def bader_read():
             bader.prefix = ''
         print(f"  Writing Bader {export_type} to file:")
         if export_type == 'volumes':
-            if export == -2:
+            if export[0] == -2:
                 for vol_num in range(bader.bader_maxima.shape[0]):
                     bader.write_volume(vol_num)
                 if bader.vacuum_tol is not None:
@@ -267,7 +267,7 @@ def bader_read():
                 for vol_num in export:
                     bader.write_volume(vol_num)
         elif export_type == 'atoms':
-            if export == -2:
+            if export[0] == -2:
                 for vol_num in range(bader.atoms.shape[0]):
                     bader.write_volume(vol_num)
                 if bader.vacuum_tol is not None:

@@ -417,7 +417,7 @@ class Bader:
         if self.export_mode is not None:
             print(f"\n  Writing Bader {self.export_mode[0]} to file:")
             if self.export_mode[0] == 'volumes':
-                if self.export_mode[1] == -2:
+                if self.export_mode[1][0] == -2:
                     for vol_num in range(self.bader_maxima.shape[0]):
                         self.write_volume(vol_num)
                     if self.vacuum_tol is not None:
@@ -426,7 +426,7 @@ class Bader:
                     for vol_num in self.export_mode[1]:
                         self.write_volume(vol_num)
             elif self.export_mode[0] == 'atoms':
-                if self.export_mode[1] == -2:
+                if self.export_mode[1][0] == -2:
                     for vol_num in range(self.atoms.shape[0]):
                         self.write_volume(vol_num)
                     if self.vacuum_tol is not None:
