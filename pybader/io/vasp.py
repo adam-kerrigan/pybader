@@ -107,11 +107,13 @@ def read(fn, charge_flag=True, spin_flag=False, buffer_size=64):
             # minus the line length as a measure againt being in the middle
             # of the grid-point line.
             spin_pos = int(.5 * (charge_pos + end_file) - line_len)
+            spin_bool = True
             if spin_pos < (charge_pos + grid_lines * line_len) * .75:
                 print(f"  No spin density in {fn}")
+                spin_bool = False
             f.seek(spin_pos)
             _ = f.readline()
-            while True:
+            while spin_bool:
                 # look for the grid defining line
                 line = f.readline()
                 if line == grid_str:
