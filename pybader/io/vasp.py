@@ -110,28 +110,29 @@ def read(fn, charge_flag=True, spin_flag=False, buffer_size=64):
             spin_bool = True
             if spin_pos < (charge_pos + grid_lines * line_len) * .75:
                 print(f"  No spin density in {fn}")
-                spin_bool = False
-            f.seek(spin_pos)
-            _ = f.readline()
-            while spin_bool:
-                # look for the grid defining line
-                line = f.readline()
-                if line == grid_str:
-                    break
-            # initialise spin density array and read in data.
-            spin = np.zeros(grid_pts, dtype=np.float64)
-            idx = 0
-            for buff in tqdm_wrap(buffer_range, desc="Spin density:  "):
-                # chgcar has 5 voxels per line.
-                idx_inc = buff * 5
-                buff_b = buff * line_len
-                spin[idx:idx + idx_inc] = f.read(buff_b).strip().split()
-                idx += idx_inc
-            if grid_mod != 0:
-                spin[-grid_mod:] = f.readline().strip().split()
-            spin = np.swapaxes(spin.reshape(grid[::-1]), 0, -1)
-            density['spin'] = spin.copy()
-            del spin
+                spin_flag = False
+            else:
+                f.seek(spin_pos)
+                _ = f.readline()
+                while True:
+                    # look for the grid defining line
+                    line = f.readline()
+                    if line == grid_str:
+                        break
+                # initialise spin density array and read in data.
+                spin = np.zeros(grid_pts, dtype=np.float64)
+                idx = 0
+                for buff in tqdm_wrap(buffer_range, desc="Spin density:  "):
+                    # chgcar has 5 voxels per line.
+                    idx_inc = buff * 5
+                    buff_b = buff * line_len
+                    spin[idx:idx + idx_inc] = f.read(buff_b).strip().split()
+                    idx += idx_inc
+                if grid_mod != 0:
+                    spin[-grid_mod:] = f.readline().strip().split()
+                spin = np.swapaxes(spin.reshape(grid[::-1]), 0, -1)
+                density['spin'] = spin.copy()
+                del spin
         print(f"  File {f.name} closed. ", end='')
     # multiply lattice by the scaling factor and transpose in to column matrix.
     if scale.shape[0] == 1:
