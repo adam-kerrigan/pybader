@@ -9,7 +9,7 @@ import os
 from sys import platform
 
 __name__ = "pybader"
-__version__ = "0.3.9"
+__version__ = "0.3.10"
 __author__ = "Adam Kerrigan"
 __email__ = "ak1014@york.ac.uk"
 __url__ = "https://github.com/kerrigoon/pybader"

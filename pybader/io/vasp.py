@@ -68,11 +68,13 @@ def read(fn, charge_flag=True, spin_flag=False, buffer_size=64):
         grid = np.array(grid_str.strip().split(), dtype=np.int64)
         grid_pts = np.prod(grid)
         print(f"  {' x '.join(grid.astype(str))} grid size.")
-        grid_lines = grid_pts // 5
-        grid_mod = grid_pts % 5
         # save the current file position and get the line length.
         charge_pos = f.tell()
-        line_len = len(f.readline())
+        _line = f.readline()
+        _split = len(_line.strip().split())
+        line_len = len(_line)
+        grid_lines = grid_pts // _split
+        grid_mod = grid_pts % _split
         f.seek(charge_pos)
         # set up buffer numbers.
         if grid_lines > buffer_size:
@@ -89,8 +91,8 @@ def read(fn, charge_flag=True, spin_flag=False, buffer_size=64):
             charge = np.zeros(grid_pts, dtype=np.float64)
             idx = 0
             for buff in tqdm_wrap(buffer_range, desc="Charge density:"):
-                # chgcar has 5 voxels per line.
-                idx_inc = buff * 5
+                # chgcar has 5 voxels per line but chg has 10.
+                idx_inc = buff * _split
                 buff_b = buff * line_len
                 charge[idx:idx+idx_inc] = f.read(buff_b).strip().split()
                 idx += idx_inc
@@ -123,8 +125,8 @@ def read(fn, charge_flag=True, spin_flag=False, buffer_size=64):
                 spin = np.zeros(grid_pts, dtype=np.float64)
                 idx = 0
                 for buff in tqdm_wrap(buffer_range, desc="Spin density:  "):
-                    # chgcar has 5 voxels per line.
-                    idx_inc = buff * 5
+                    # chgcar has 5 voxels per line but chg has 10.
+                    idx_inc = buff * _split
                     buff_b = buff * line_len
                     spin[idx:idx + idx_inc] = f.read(buff_b).strip().split()
                     idx += idx_inc
