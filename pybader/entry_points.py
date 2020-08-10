@@ -300,7 +300,7 @@ def bader_read():
         if hasattr(bader, 'bader_volumes'):
             print(bader.results(volume_flag=True))
         else:
-            print(f"  No Bader volume information in {args['filename']}."
+            print(f"  No Bader volume information in {args['filename']}.")
     if args['density_write']:
         bader.write_density()
     if args['atoms']:
