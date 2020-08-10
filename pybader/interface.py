@@ -446,11 +446,15 @@ class Bader:
                     f.write(self.results(volume_flag=True))
         print('Done.')
 
-    def volumes_init(self):
+    def volumes_init(self, volumes=None):
         """Initialise the bader_volumes array using vacuum_tol.
+
+        args:
+            volumes: ndarray of same shape as density (optional).
         """
-        dtype = dtype_calc(-np.prod(self.density.shape))
-        volumes = np.zeros(self.density.shape, dtype=dtype)
+        if volumes is None:
+            dtype = dtype_calc(-np.prod(self.density.shape))
+            volumes = np.zeros(self.density.shape, dtype=dtype)
         try:
             vacuum_tol = np.float64(self.vacuum_tol)
             volumes, vacuum_charge, vacuum_volume = vacuum_assign(

@@ -202,6 +202,8 @@ def bader_read():
     default value of './bader.p' is used"""
     a = "Whether to show the Bader atom infomation"
     v = "Whether to show the Bader volume infomation"
+    vac = """Tolerance used for assuming density is vacuum:
+    auto (1E-3) | float"""
     e = """Bader volumes or atoms to be exported:
     [ sel_atom (default) | sel_volume | all_atom | all_volume ] int [int ...]"""
     d = "Write copy of the orginal density file"
@@ -223,6 +225,7 @@ def bader_read():
                         default='bader.p', help=filename)
     parser.add_argument('-a', '--atoms', action='store_true', help=a)
     parser.add_argument('-v', '--volume', action='store_true', help=v)
+    parser.add_argument('-vac', '--vacuum-tol', nargs=1, help=vac)
     parser.add_argument('-e', '--export', nargs='+', help=e)
     parser.add_argument('-d', '--density-write', action='store_true', help=d)
     parser.add_argument('-f', '--fortran-format', action='count', help=f)
@@ -232,6 +235,24 @@ def bader_read():
     with open(args['filename'], '+rb') as f:
         bader = load(f)
 
+    if args.get('vacuum_tol') is not None:
+        try:
+            vac_tol = np.float64(args['vacuum_tol'][0])
+        except ValueError:
+            if args['vacuum_tol'][0].lower() != 'auto':
+                print("  Unable to parse vacuum tolerance, using 1E-3\n")
+            vac_tol = 1E-3
+        if vac_tol > (bader.vacuum_tol if bader.vacuum_tol is not None else 0):
+            bader.vacuum_tol = vac_tol
+            if hasattr(bader, 'bader_volumes'):
+                bader.volumes_init(volumes=bader.bader_volumes)
+                bader.sum_volumes(bader=True)
+            bader.volumes_init(volumes=bader.atoms_volumes)
+            bader.atoms_volumes = bader.bader_volumes
+            bader.sum_volumes()
+        else:
+            print(f"  New vacuum_tol ({vacuum_tol}) is not larger than current"
+                  + f" vacuum_tol ({bader.vacuum_tol}).")
     if args['fortran_format'] is not None:
         bader.fortran_format = args['fortran_format'] % 3
     if args.get('export') is not None:
@@ -276,7 +297,10 @@ def bader_read():
                 for vol_num in export:
                     bader.write_volume(vol_num)
     if args['volume']:
-        print(bader.results(volume_flag=True))
+        if hasattr(bader, 'bader_volumes'):
+            print(bader.results(volume_flag=True))
+        else:
+            print(f"  No Bader volume information in {args['filename']}."
     if args['density_write']:
         bader.write_density()
     if args['atoms']:
