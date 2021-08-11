@@ -1,0 +1,16 @@
+[package]
+name = "bader-python"
+version = "0.4.0"
+authors = ["Adam Kerrigan <ak1014@york.ac.uk>"]
+edition = "2018"
+description = "Python interface to https://github.com/adam-kerrigan/bader-rs"
+license = "MIT"
+readme = "README.md"
+repository = "https://github.com/adam-kerrigan/pybader"
+categories = ["command-line-utilities", "science"]
+keywords = ["Analysis", "Materials_Science", "Physics", "Chemistry", "Multi-Threading"]
+
+# See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
+
+[dependencies]
+bader = "0.3.2"
