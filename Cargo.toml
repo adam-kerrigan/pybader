@@ -14,3 +14,13 @@ keywords = ["Analysis", "Materials_Science", "Physics", "Chemistry", "Multi-Thre
 
 [dependencies]
 bader = "0.3.2"
+atomic-counter = "1.0.1"
+rustc-hash = "1.1.0"
+
+[lib]
+name = "bader_python"
+crate-type = ["cdylib"]
+
+[dependencies.pyo3]
+version = "0.14.2"
+features = ["extension-module"]
