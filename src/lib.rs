@@ -1,11 +1,14 @@
 use pyo3::prelude::*;
 
+mod io;
 mod voxel_map;
 
 #[pymodule]
+#[pyo3(name="_pybader")]
 fn bader_python(_py: Python, m: &PyModule) -> PyResult<()> {
-    m.add_function(wrap_pyfunction!(voxel_map::get_voxelmap, m)?)?;
-    m.add_function(wrap_pyfunction!(voxel_map::calculate_volume_and_radius, m)?)?;
+    m.add_class::<voxel_map::PyVoxelMap>()?;
+    m.add_function(wrap_pyfunction!(io::read_vasp, m)?)?;
+    m.add_function(wrap_pyfunction!(io::read_cube, m)?)?;
 
     Ok(())
 }

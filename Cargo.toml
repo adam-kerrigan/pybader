@@ -1,5 +1,5 @@
 [package]
-name = "bader-python"
+name = "pybader"
 version = "0.4.0"
 authors = ["Adam Kerrigan <ak1014@york.ac.uk>"]
 edition = "2018"
@@ -13,12 +13,12 @@ keywords = ["Analysis", "Materials_Science", "Physics", "Chemistry", "Multi-Thre
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
 [dependencies]
-bader = "0.4.4"
+bader = "0.4.6"
 atomic-counter = "1.0.1"
 rustc-hash = "1.1.0"
 numpy = "0.19.0"
 pyo3 = { version = "0.19", features = ["extension-module"] }
 
 [lib]
-name = "bader_python"
+name = "pybader"
 crate-type = ["cdylib"]
